@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
             PageContentSeeder::class,
             FeatureSeeder::class,
             ContentBlockSeeder::class,
-            
+            TeamMemberSeeder::class,
+            ProfileSeeder::class,
+            WorkProgramSeeder::class,
             // Kamu bisa tambahkan seeder lain di sini nanti
         ]);
     }

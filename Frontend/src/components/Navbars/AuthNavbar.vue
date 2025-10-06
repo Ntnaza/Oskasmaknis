@@ -12,7 +12,8 @@
           class="text-white text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase"
           to="/"
         >
-          Vue Notus
+          <!-- Perubahan: Nama Brand -->
+          OSIS & MPK
         </router-link>
         <button
           class="cursor-pointer text-xl leading-none px-3 py-1 border border-solid border-transparent rounded bg-transparent block lg:hidden outline-none focus:outline-none"
@@ -41,6 +42,18 @@
           </li>
         </ul>
         <ul class="flex flex-col lg:flex-row list-none lg:ml-auto">
+          
+          <!-- Penambahan: Link Program Kerja -->
+          <li class="flex items-center">
+            <router-link
+              to="/program-kerja"
+              class="lg:text-white lg:hover:text-blueGray-200 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
+            >
+              <i class="lg:text-blueGray-200 text-blueGray-400 fas fa-calendar-alt text-lg leading-lg mr-2" />
+              Program Kerja
+            </router-link>
+          </li>
+
           <li class="flex items-center">
             <PagesDropdown />
           </li>
@@ -114,3 +127,4 @@ export default {
   },
 };
 </script>
+

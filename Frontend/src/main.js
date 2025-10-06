@@ -24,8 +24,9 @@ import Maps from "@/views/admin/Maps.vue";
 import ManageLanding from "@/views/admin/ManageLanding.vue";
 import ManageFeatures from "@/views/admin/ManageFeatures.vue";
 import ManagePromo from "@/views/admin/ManagePromo.vue";
-// Menyiapkan untuk CRUD selanjutnya (dinonaktifkan sementara)
-// import ManageTeam from "@/views/admin/ManageTeam.vue";
+import ManageTeam from "@/views/admin/ManageTeam.vue";
+import ManageProfile from "@/views/admin/ManageProfile.vue";
+import ManageWorkPrograms from "@/views/admin/ManageWorkPrograms.vue";
 
 
 // views for Auth layout
@@ -38,6 +39,8 @@ import Register from "@/views/auth/Register.vue";
 import Landing from "@/views/Landing.vue";
 import Profile from "@/views/Profile.vue";
 import Index from "@/views/Index.vue";
+import WorkPrograms from "@/views/WorkPrograms.vue";
+import AnggotaDetail from "@/views/AnggotaDetail.vue";
 
 // routes
 
@@ -75,11 +78,18 @@ const routes = [
         path: "/admin/manage-promo",
         component: ManagePromo,
       },
-      // Menambahkan rute untuk CRUD selanjutnya (dinonaktifkan sementara)
-      // {
-      //   path: "/admin/manage-team",
-      //   component: ManageTeam,
-      // },
+      {
+        path: "/admin/manage-team",
+        component: ManageTeam,
+      },
+      {
+        path: "/admin/manage-profile",
+        component: ManageProfile,
+      },
+      {
+        path: "/admin/manage-work-programs",
+        component: ManageWorkPrograms,
+      },
     ],
   },
   {
@@ -104,6 +114,16 @@ const routes = [
   {
     path: "/profile",
     component: Profile,
+  },
+  {
+    path: "/program-kerja",
+    component: WorkPrograms,
+  },
+   {
+    // :id adalah parameter dinamis
+    path: "/anggota/:id",
+    name: "anggota-detail",
+    component: AnggotaDetail,
   },
   {
     path: "/",
