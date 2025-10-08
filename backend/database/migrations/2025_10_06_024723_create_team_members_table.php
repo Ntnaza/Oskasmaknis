@@ -16,7 +16,9 @@ return new class extends Migration
             $table->string('name');
             $table->string('position');
             $table->string('photo_path')->nullable();
-            $table->json('social_links')->nullable(); // Kolom untuk menyimpan link medsos (Twitter, Facebook, dll)
+            $table->string('header_photo_path')->nullable(); // <-- Kolom baru untuk gambar latar
+            $table->json('social_links')->nullable();
+            $table->json('bio_data')->nullable(); // <-- Kolom baru untuk semua data bio
             $table->integer('order')->default(0);
             $table->timestamps();
         });
@@ -30,3 +32,4 @@ return new class extends Migration
         Schema::dropIfExists('team_members');
     }
 };
+

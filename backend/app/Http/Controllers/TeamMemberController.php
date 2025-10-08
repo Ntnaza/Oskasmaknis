@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TeamMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class TeamMemberController extends Controller
 {
@@ -13,7 +14,6 @@ class TeamMemberController extends Controller
      */
     public function index()
     {
-        // Ambil semua anggota tim, diurutkan berdasarkan kolom 'order'
         return TeamMember::orderBy('order', 'asc')->get();
     }
 
@@ -26,12 +26,31 @@ class TeamMemberController extends Controller
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'order' => 'required|integer',
+            'photo_file' => 'nullable|image|max:2048',
+            'header_photo_file' => 'nullable|image|max:2048',
+            
+            // PENAMBAHAN: Validasi yang lebih spesifik untuk social_links
             'social_links' => 'nullable|array',
-            'photo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'social_links.instagram' => 'nullable|url',
+            'social_links.facebook' => 'nullable|url',
+            'social_links.email' => 'nullable|email',
+
+            // PENAMBAHAN: Validasi yang lebih spesifik untuk bio_data
+            'bio_data' => 'nullable|array',
+            'bio_data.sambutan' => 'nullable|string',
+            'bio_data.jurusan' => 'nullable|string',
+            'bio_data.ttl' => 'nullable|string',
+            'bio_data.hobi' => 'nullable|string',
+            'bio_data.visi_misi' => 'nullable|string',
+            'bio_data.prestasi' => 'nullable|array',
+            'bio_data.prestasi.*' => 'nullable|string', // Memastikan semua item prestasi adalah string
         ]);
 
         if ($request->hasFile('photo_file')) {
             $validated['photo_path'] = $request->file('photo_file')->store('team-photos', 'public');
+        }
+        if ($request->hasFile('header_photo_file')) {
+            $validated['header_photo_path'] = $request->file('header_photo_file')->store('team-headers', 'public');
         }
 
         $teamMember = TeamMember::create($validated);
@@ -44,7 +63,8 @@ class TeamMemberController extends Controller
      */
     public function show(TeamMember $teamMember)
     {
-        // Muat data anggota tim BERSAMA DENGAN relasi 'workPrograms'
+        // Fungsi ini sudah benar, memuat relasi program kerja.
+        // Nanti bisa ditambahkan relasi galeri jika sudah dibuat.
         return $teamMember->load('workPrograms');
     }
 
@@ -57,16 +77,38 @@ class TeamMemberController extends Controller
             'name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'order' => 'required|integer',
+            'photo_file' => 'nullable|image|max:2048',
+            'header_photo_file' => 'nullable|image|max:2048',
+
+            // PENAMBAHAN: Validasi yang lebih spesifik untuk social_links
             'social_links' => 'nullable|array',
-            'photo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'social_links.instagram' => 'nullable|url',
+            'social_links.facebook' => 'nullable|url',
+            'social_links.email' => 'nullable|email',
+
+            // PENAMBAHAN: Validasi yang lebih spesifik untuk bio_data
+            'bio_data' => 'nullable|array',
+            'bio_data.sambutan' => 'nullable|string',
+            'bio_data.jurusan' => 'nullable|string',
+            'bio_data.ttl' => 'nullable|string',
+            'bio_data.hobi' => 'nullable|string',
+            'bio_data.visi_misi' => 'nullable|string',
+            'bio_data.prestasi' => 'nullable|array',
+            'bio_data.prestasi.*' => 'nullable|string',
         ]);
 
         if ($request->hasFile('photo_file')) {
-            // Hapus foto lama jika ada
             if ($teamMember->photo_path) {
                 Storage::disk('public')->delete($teamMember->photo_path);
             }
             $validated['photo_path'] = $request->file('photo_file')->store('team-photos', 'public');
+        }
+        
+        if ($request->hasFile('header_photo_file')) {
+            if ($teamMember->header_photo_path) {
+                Storage::disk('public')->delete($teamMember->header_photo_path);
+            }
+            $validated['header_photo_path'] = $request->file('header_photo_file')->store('team-headers', 'public');
         }
 
         $teamMember->update($validated);
@@ -79,12 +121,13 @@ class TeamMemberController extends Controller
      */
     public function destroy(TeamMember $teamMember)
     {
-        // Hapus foto dari storage saat anggota dihapus
         if ($teamMember->photo_path) {
             Storage::disk('public')->delete($teamMember->photo_path);
+        }
+        if ($teamMember->header_photo_path) {
+            Storage::disk('public')->delete($teamMember->header_photo_path);
         }
         $teamMember->delete();
         return response()->json(['message' => 'Anggota tim berhasil dihapus']);
     }
 }
-

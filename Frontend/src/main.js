@@ -27,6 +27,7 @@ import ManagePromo from "@/views/admin/ManagePromo.vue";
 import ManageTeam from "@/views/admin/ManageTeam.vue";
 import ManageProfile from "@/views/admin/ManageProfile.vue";
 import ManageWorkPrograms from "@/views/admin/ManageWorkPrograms.vue";
+import ManageArticles from "@/views/admin/ManageArticles.vue";
 
 
 // views for Auth layout
@@ -41,7 +42,8 @@ import Profile from "@/views/Profile.vue";
 import Index from "@/views/Index.vue";
 import WorkPrograms from "@/views/WorkPrograms.vue";
 import AnggotaDetail from "@/views/AnggotaDetail.vue";
-
+import ArticlesIndex from "@/views/ArticlesIndex.vue";
+import ArticleDetail from "@/views/ArticleDetail.vue";
 // routes
 
 const routes = [
@@ -90,6 +92,10 @@ const routes = [
         path: "/admin/manage-work-programs",
         component: ManageWorkPrograms,
       },
+      {
+        path: "/admin/manage-articles",
+        component: ManageArticles,
+      },
     ],
   },
   {
@@ -124,6 +130,15 @@ const routes = [
     path: "/anggota/:id",
     name: "anggota-detail",
     component: AnggotaDetail,
+  },
+  {
+    path: "/berita-dan-galeri",
+    component: ArticlesIndex,
+  },
+  {
+    path: "/berita/:slug",
+    name: "artikel-detail",
+    component: ArticleDetail,
   },
   {
     path: "/",

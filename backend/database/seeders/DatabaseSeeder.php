@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             TeamMemberSeeder::class,
             ProfileSeeder::class,
             WorkProgramSeeder::class,
+            ArticleSeeder::class,
             // Kamu bisa tambahkan seeder lain di sini nanti
         ]);
     }

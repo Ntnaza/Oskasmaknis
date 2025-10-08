@@ -8,7 +8,7 @@ use App\Http\Controllers\ContentBlockController;
 use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WorkProgramController; // <-- 1. Impor controller baru
-
+use App\Http\Controllers\ArticleController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -36,3 +36,4 @@ Route::post('/profile', [ProfileController::class, 'update']);
 // 2. Tambahkan baris ini untuk mendaftarkan semua rute CRUD WorkProgram
 Route::apiResource('work-programs', WorkProgramController::class);
 
+Route::apiResource('articles', ArticleController::class);
