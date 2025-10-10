@@ -2,7 +2,6 @@
   <div>
     <navbar />
     <main>
-      <!-- Header Halaman -->
       <div class="relative pt-16 pb-32 flex content-center items-center justify-center min-h-screen-75">
         <div
           class="absolute top-0 w-full h-full bg-center bg-cover"
@@ -18,7 +17,7 @@
                   Berita & Galeri Kegiatan
                 </h1>
                 <p class="mt-4 text-lg text-blueGray-200">
-                  Tetap terhubung dengan informasi terbaru, pengumuman, dan dokumentasi setiap momen berharga dari kegiatan OSIS & MPK kami.
+                  Tetap terhubung dengan informasi terbaru dari kegiatan OSIS & MPK kami.
                 </p>
               </div>
             </div>
@@ -26,52 +25,79 @@
         </div>
       </div>
 
-      <!-- Daftar Konten -->
       <section class="relative py-20 bg-blueGray-100">
         <div class="container mx-auto px-4">
-          <div class="flex flex-wrap -mt-48">
-            <!-- Looping Artikel/Galeri -->
-            <div v-for="article in articles" :key="article.id" class="w-full md:w-6/12 lg:w-4/12 px-4">
-              <router-link :to="`/berita/${article.slug}`">
-                <div class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded-lg transform hover:-translate-y-2 transition-transform duration-300">
-                  <img
-                    alt="..."
-                    :src="getFullImageUrl(article.featured_image_path)"
-                    class="w-full h-48 object-cover align-middle rounded-t-lg"
-                  />
-                  <div class="px-4 py-5 flex-auto">
-                    <h6 class="text-xl font-semibold">{{ article.title }}</h6>
-                    <p class="mt-2 mb-4 text-blueGray-500">
-                      {{ article.excerpt }}
-                    </p>
-                    <div class="text-emerald-500 font-bold">
-                      Baca Selengkapnya <i class="fas fa-arrow-right ml-1"></i>
-                    </div>
-                  </div>
-                </div>
-              </router-link>
-            </div>
+          <div class="-mt-48">
             
-            <div v-if="!articles.length" class="w-full text-center py-12">
-                <p class="text-blueGray-500">Memuat konten...</p>
+            <div 
+              v-if="articles.length > 0 && paginationData" 
+              class="masonry-container" 
+              :key="paginationData.current_page"
+            >
+              <div
+                v-for="article in articles"
+                :key="article.id"
+                class="masonry-item"
+              >
+                <router-link :to="`/berita/${article.slug}`">
+                  <img
+                    :src="getFullImageUrl(article.featured_image_path)"
+                    :alt="article.title"
+                    class="w-full h-auto rounded-lg block"
+                  />
+                  <div class="p-4">
+                    <h3 class="text-lg font-bold text-blueGray-700 mb-2">{{ article.title }}</h3>
+                    <p class="text-sm text-blueGray-500">{{ article.excerpt }}</p>
+                  </div>
+                </router-link>
+              </div>
+            </div>
+
+            <div v-if="paginationData" class="flex justify-center mt-12">
+              <button 
+                @click="fetchArticles(paginationData.prev_page_url)"
+                :disabled="!paginationData.prev_page_url"
+                class="bg-emerald-500 text-white font-bold py-2 px-4 rounded-l disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                &laquo; Sebelumnya
+              </button>
+              <button 
+                @click="fetchArticles(paginationData.next_page_url)"
+                :disabled="!paginationData.next_page_url"
+                class="bg-emerald-500 text-white font-bold py-2 px-4 rounded-r disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                Berikutnya &raquo;
+              </button>
+            </div>
+
+            <div v-if="isLoading" class="text-center py-12">
+              <p class="text-blueGray-500">Memuat konten...</p>
+            </div>
+             <div v-if="!isLoading && articles.length === 0" class="w-full text-center py-12">
+              <p class="text-blueGray-500">Saat ini belum ada artikel untuk ditampilkan.</p>
             </div>
           </div>
         </div>
       </section>
-
     </main>
     <footer-component />
   </div>
 </template>
+
 <script>
+// Bagian script tidak perlu diubah sama sekali
 import Navbar from "@/components/Navbars/AuthNavbar.vue";
 import FooterComponent from "@/components/Footers/Footer.vue";
 import axios from "axios";
+
+const API_URL = 'http://localhost:8000/api/articles';
 
 export default {
   data() {
     return {
       articles: [],
+      isLoading: true,
+      paginationData: null,
     };
   },
   components: {
@@ -84,12 +110,16 @@ export default {
       if (path.startsWith('http')) return path;
       return `http://localhost:8000/storage/${path}`;
     },
-    async fetchArticles() {
+    async fetchArticles(url = API_URL) {
+      this.isLoading = true;
       try {
-        const response = await axios.get('http://localhost:8000/api/articles');
-        this.articles = response.data;
+        const response = await axios.get(url);
+        this.articles = response.data.data;
+        this.paginationData = response.data;
       } catch (error) {
         console.error("Gagal mengambil data artikel:", error);
+      } finally {
+        this.isLoading = false;
       }
     }
   },
@@ -99,3 +129,29 @@ export default {
 };
 </script>
 
+<style scoped>
+/* Style Anda tidak berubah */
+.masonry-container {
+  column-gap: 1rem;
+  column-count: 2;
+}
+.masonry-item {
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 1rem;
+  break-inside: avoid;
+  background-color: white;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+.masonry-item:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+@media (min-width: 768px) {
+  .masonry-container {
+    column-count: 3;
+  }
+}
+</style>

@@ -9,6 +9,7 @@ use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WorkProgramController; // <-- 1. Impor controller baru
 use App\Http\Controllers\ArticleController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -37,3 +38,4 @@ Route::post('/profile', [ProfileController::class, 'update']);
 Route::apiResource('work-programs', WorkProgramController::class);
 
 Route::apiResource('articles', ArticleController::class);
+Route::get('/all-articles', [ArticleController::class, 'fetchAll']);

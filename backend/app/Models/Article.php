@@ -33,4 +33,13 @@ class Article extends Model
         'gallery' => 'array', // Memberitahu Laravel bahwa kolom ini adalah JSON/array
         'published_at' => 'datetime', // Memberitahu Laravel bahwa kolom ini adalah tanggal
     ];
+    /**
+     * Mengubah kunci pencarian default untuk route model binding.
+     *
+     * @return string
+     */
+    public function getRouteKeyName()
+    {
+        return 'slug'; // <-- TAMBAHKAN FUNGSI INI
+    }
 }

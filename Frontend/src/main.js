@@ -43,7 +43,7 @@ import Index from "@/views/Index.vue";
 import WorkPrograms from "@/views/WorkPrograms.vue";
 import AnggotaDetail from "@/views/AnggotaDetail.vue";
 import ArticlesIndex from "@/views/ArticlesIndex.vue";
-import ArticleDetail from "@/views/ArticleDetail.vue";
+import BeritaDetail from "@/views/BeritaDetail.vue";
 // routes
 
 const routes = [
@@ -136,9 +136,9 @@ const routes = [
     component: ArticlesIndex,
   },
   {
-    path: "/berita/:slug",
-    name: "artikel-detail",
-    component: ArticleDetail,
+    path: "/berita/:slug", // :slug adalah parameter dinamis
+    name: "berita-detail",
+    component: BeritaDetail,
   },
   {
     path: "/",

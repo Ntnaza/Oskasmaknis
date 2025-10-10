@@ -9,13 +9,18 @@ use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
+    public function fetchAll()
+    {
+        return Article::orderBy('published_at', 'desc')->get();
+    }
     /**
+     * 
      * Menampilkan daftar semua artikel/galeri.
      */
     public function index()
     {
         // Ambil semua artikel, urutkan dari yang terbaru
-        return Article::orderBy('published_at', 'desc')->get();
+        return Article::latest()->paginate(9);
     }
 
     /**
@@ -29,7 +34,7 @@ class ArticleController extends Controller
             'content' => 'nullable|string',
             'published_at' => 'nullable|date',
             'featured_image_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'gallery_files.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validasi untuk multiple file
+            'gallery_files.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         // Buat slug otomatis dari judul
@@ -57,6 +62,7 @@ class ArticleController extends Controller
 
     /**
      * Menampilkan detail satu artikel/galeri.
+     * Fungsi ini tetap menggunakan Route Model Binding (berdasarkan slug) untuk halaman publik.
      */
     public function show(Article $article)
     {
@@ -65,48 +71,71 @@ class ArticleController extends Controller
 
     /**
      * Memperbarui artikel/galeri yang ada.
+     * PERUBAHAN DI SINI: Menggunakan $id dan mencari manual.
      */
-    public function update(Request $request, Article $article)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'excerpt' => 'nullable|string',
-            'content' => 'nullable|string',
-            'published_at' => 'nullable|date',
-            'featured_image_file' => 'nullable|image|max:2048',
-            'gallery_files.*' => 'nullable|image|max:2048',
-        ]);
-        
-        $validated['slug'] = Str::slug($validated['title']);
+    public function update(Request $request, $id)
+{
+    $article = Article::findOrFail($id);
 
-        if ($request->hasFile('featured_image_file')) {
-            if ($article->featured_image_path) {
-                Storage::disk('public')->delete($article->featured_image_path);
-            }
-            $validated['featured_image_path'] = $request->file('featured_image_file')->store('articles', 'public');
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'excerpt' => 'nullable|string',
+        'content' => 'nullable|string',
+        'published_at' => 'nullable|date',
+        'featured_image_file' => 'nullable|image|max:2048',
+        'gallery_files.*' => 'nullable|image|max:2048',
+    ]);
+    
+    $validated['slug'] = Str::slug($validated['title']);
+
+    if ($request->hasFile('featured_image_file')) {
+        if ($article->featured_image_path) {
+            Storage::disk('public')->delete($article->featured_image_path);
         }
-
-        $galleryPaths = $article->gallery ?? [];
-        if ($request->hasFile('gallery_files')) {
-             // Di aplikasi nyata, Anda mungkin ingin logika untuk menghapus gambar lama,
-             // tapi untuk sekarang kita hanya tambahkan yang baru.
-            foreach ($request->file('gallery_files') as $file) {
-                $path = $file->store('gallery', 'public');
-                $galleryPaths[] = $path;
-            }
-        }
-        $validated['gallery'] = $galleryPaths;
-
-        $article->update($validated);
-
-        return response()->json($article);
+        $validated['featured_image_path'] = $request->file('featured_image_file')->store('articles', 'public');
     }
+
+    // =======================================================
+    // LOGIKA BARU UNTUK MENGHAPUS GAMBAR GALERI
+    // =======================================================
+    $galleryPaths = $article->gallery ?? [];
+    
+    // 1. Ambil daftar gambar yang akan dihapus dari request
+    $imagesToDelete = json_decode($request->input('images_to_delete', '[]'), true);
+
+    if (!empty($imagesToDelete)) {
+        // Hapus file fisik dari storage
+        foreach ($imagesToDelete as $path) {
+            Storage::disk('public')->delete($path);
+        }
+        // Hapus path dari array galeri yang ada
+        $galleryPaths = array_diff($galleryPaths, $imagesToDelete);
+    }
+    // =======================================================
+
+    // Tambahkan file galeri baru yang di-upload
+    if ($request->hasFile('gallery_files')) {
+        foreach ($request->file('gallery_files') as $file) {
+            $path = $file->store('gallery', 'public');
+            $galleryPaths[] = $path;
+        }
+    }
+    // Set array galeri final (setelah difilter dan ditambah)
+    $validated['gallery'] = array_values($galleryPaths); // array_values untuk re-index array
+
+    $article->update($validated);
+
+    return response()->json($article);
+}
 
     /**
      * Menghapus artikel/galeri.
+     * PERUBAHAN DI SINI: Menggunakan $id dan mencari manual.
      */
-    public function destroy(Article $article)
+    public function destroy($id)
     {
+        $article = Article::findOrFail($id); // <-- Mencari manual berdasarkan ID
+
         // Hapus gambar utama
         if ($article->featured_image_path) {
             Storage::disk('public')->delete($article->featured_image_path);
