@@ -68,5 +68,11 @@ class WorkProgramController extends Controller
         $workProgram->delete();
         return response()->json(['message' => 'Program kerja berhasil dihapus']);
     }
+    // TAMBAHKAN METHOD INI
+    public function getAllForSelection()
+    {
+        $workPrograms = WorkProgram::select('id', 'title')->get();
+        return response()->json(['data' => $workPrograms]);
+    }
 }
 

@@ -43,11 +43,18 @@
                   <img
                     :src="getFullImageUrl(article.featured_image_path)"
                     :alt="article.title"
-                    class="w-full h-auto rounded-lg block"
+                    class="w-full h-auto block"
                   />
                   <div class="p-4">
                     <h3 class="text-lg font-bold text-blueGray-700 mb-2">{{ article.title }}</h3>
-                    <p class="text-sm text-blueGray-500">{{ article.excerpt }}</p>
+                    <p class="text-sm text-blueGray-500 leading-relaxed">{{ article.excerpt }}</p>
+                    
+                    <hr class="my-4 border-blueGray-200" /> 
+                    
+                    <div class="text-xs text-blueGray-400 font-medium mt-4">
+                      <span>{{ new Date(article.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) }}</span>
+                    </div>
+
                   </div>
                 </router-link>
               </div>
@@ -85,7 +92,7 @@
 </template>
 
 <script>
-// Bagian script tidak perlu diubah sama sekali
+// Bagian script tidak perlu diubah
 import Navbar from "@/components/Navbars/AuthNavbar.vue";
 import FooterComponent from "@/components/Footers/Footer.vue";
 import axios from "axios";
@@ -130,7 +137,7 @@ export default {
 </script>
 
 <style scoped>
-/* Style Anda tidak berubah */
+/* Style Masonry dengan penyesuaian */
 .masonry-container {
   column-gap: 1rem;
   column-count: 2;
@@ -141,7 +148,8 @@ export default {
   margin-bottom: 1rem;
   break-inside: avoid;
   background-color: white;
-  border-radius: 1rem;
+  /* PERUBAHAN DI SINI: Sudut lebih tajam */
+  border-radius: 0.75rem; /* Sebelumnya 1rem */
   overflow: hidden;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: box-shadow 0.3s ease;

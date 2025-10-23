@@ -12,12 +12,16 @@ module.exports = {
       "./**/*.vue",
       "./*.vue",
     ],
+    
     options: {
-      // PERBAIKAN: Menggunakan sintaks safelist untuk Tailwind v2
+      // PERUBAHAN UTAMA ADA DI SINI
       safelist: [
-        /bg-(red|orange|amber|emerald|teal|lightBlue|indigo|purple|pink)-(400|500)/,
-        /text-(red|orange|amber|emerald|teal|lightBlue|indigo|purple|pink)-(500)/,
-      ],
+  // Pola ini mencakup SEMUA warna latar belakang dari palet Tailwind
+  /bg-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(100|200|300|400|500|600|700|800|900|950)/,
+
+  // Regex lama untuk teks bisa dibiarkan jika masih perlu
+  /text-(red|orange|amber|emerald|teal|lightBlue|indigo|purple|pink)-(500)/,
+],
     },
   },
   theme: {
@@ -146,4 +150,3 @@ module.exports = {
     }),
   ],
 };
-

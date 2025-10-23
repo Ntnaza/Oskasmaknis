@@ -1,4 +1,5 @@
 import { createApp } from "vue";
+import { createPinia } from "pinia"; // Import ini sudah benar
 import { createWebHistory, createRouter } from "vue-router";
 
 // styles
@@ -28,6 +29,7 @@ import ManageTeam from "@/views/admin/ManageTeam.vue";
 import ManageProfile from "@/views/admin/ManageProfile.vue";
 import ManageWorkPrograms from "@/views/admin/ManageWorkPrograms.vue";
 import ManageArticles from "@/views/admin/ManageArticles.vue";
+import ManageIndex from "@/views/admin/ManageIndex.vue";
 
 
 // views for Auth layout
@@ -44,6 +46,7 @@ import WorkPrograms from "@/views/WorkPrograms.vue";
 import AnggotaDetail from "@/views/AnggotaDetail.vue";
 import ArticlesIndex from "@/views/ArticlesIndex.vue";
 import BeritaDetail from "@/views/BeritaDetail.vue";
+
 // routes
 
 const routes = [
@@ -95,6 +98,10 @@ const routes = [
       {
         path: "/admin/manage-articles",
         component: ManageArticles,
+      },
+      {
+        path: "/admin/manage-index",
+        component: ManageIndex,
       },
     ],
   },
@@ -152,5 +159,10 @@ const router = createRouter({
   routes,
 });
 
-createApp(App).use(router).mount("#app");
+const app = createApp(App);
+const pinia = createPinia();
 
+app.use(router);
+app.use(pinia);
+
+app.mount("#app");

@@ -4,31 +4,30 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\PageContent; // Jangan lupa impor Model-nya
+use App\Models\PageContent;
 
 class PageContentSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Gunakan updateOrCreate agar tidak ada data duplikat jika seeder dijalankan berkali-kali
+        // Data untuk Halaman Landing (biarkan saja)
         PageContent::updateOrCreate(
-            ['slug' => 'landing'], // Kunci untuk mencari data
+            ['slug' => 'landing'],
             [
-                'title' => 'OSIS & MPK',
-                'subtitle' => 'Semua berawal dari sini'
+                'title' => 'Kisah OSIS & MPK Dimulai Dari Sini',
+                'subtitle' => 'Ini adalah halaman Landing Page dinamis...',
+                'hero_image_url' => null,
             ]
         );
 
-        // Kamu bisa tambahkan data untuk halaman lain di sini nanti
-        // PageContent::updateOrCreate(
-        //     ['slug' => 'about-us'],
-        //     [
-        //         'title' => 'Tentang Kami',
-        //         'subtitle' => 'Sejarah singkat OSIS & MPK sekolah.'
-        //     ]
-        // );
+        // Data untuk Halaman Index (Seksi #1 Anda)
+        PageContent::updateOrCreate(
+            ['slug' => 'index'],
+            [
+                'title' => 'Selamat Datang di Website Resmi OSIS & MPK',
+                'subtitle' => 'Ini adalah halaman perkenalan awal organisasi kami. Wadah aspirasi, kreasi, dan informasi untuk seluruh siswa.',
+                'hero_image_url' => null,
+            ]
+        );
     }
 }

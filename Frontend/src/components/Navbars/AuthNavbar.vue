@@ -29,76 +29,111 @@
       >
         <ul class="flex flex-col lg:flex-row list-none lg:ml-auto">
           
-          <!-- Tambahkan link baru di sini -->
           <li class="flex items-center">
-            <router-link
-              to="/berita-dan-galeri"
-              class="lg:text-white lg:hover:text-blueGray-200 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-            >
-              <i class="lg:text-blueGray-200 text-blueGray-400 fas fa-newspaper text-lg leading-lg mr-2" />
-              Berita & Galeri
-            </router-link>
-          </li>
-          
-          <li class="flex items-center">
-            <router-link
-              to="/struktur-organisasi"
-              class="lg:text-white lg:hover:text-blueGray-200 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-            >
-              <i class="lg:text-blueGray-200 text-blueGray-400 fas fa-sitemap text-lg leading-lg mr-2" />
-              Struktur Organisasi
-            </router-link>
-          </li>
-          
-          <li class="flex items-center">
-            <router-link
-              to="/program-kerja"
-              class="lg:text-white lg:hover:text-blueGray-200 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-            >
-              <i class="lg:text-blueGray-200 text-blueGray-400 fas fa-calendar-alt text-lg leading-lg mr-2" />
-              Program Kerja
+            <router-link to="/program-kerja" v-slot="{ isActive }">
+              <a
+                class="lg:text-white text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold relative group"
+                :class="[!isActive && 'lg:hover:text-blueGray-200']"
+              >
+                Program Kerja
+                <span
+                  class="absolute bottom-0 left-0 right-0 mx-auto h-0.5 lg:bg-white bg-blueGray-700 transition-all duration-300" :class="[isActive ? 'w-9/12' : 'w-0 group-hover:w-9/12']"
+                ></span>
+              </a>
             </router-link>
           </li>
 
           <li class="flex items-center">
-            <PagesDropdown />
+            <router-link to="/berita-dan-galeri" v-slot="{ isActive }">
+              <a
+                class="lg:text-white text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold relative group"
+                :class="[!isActive && 'lg:hover:text-blueGray-200']"
+              >
+                Berita & Galeri
+                <span
+                  class="absolute bottom-0 left-0 right-0 mx-auto h-0.5 lg:bg-white bg-blueGray-700 transition-all duration-300" :class="[isActive ? 'w-9/12' : 'w-0 group-hover:w-9/12']"
+                ></span>
+              </a>
+            </router-link>
           </li>
+          
+          <li class="flex items-center">
+            <router-link to="/landing" v-slot="{ isActive }">
+              <a
+                class="lg:text-white text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold relative group"
+                :class="[!isActive && 'lg:hover:text-blueGray-200']"
+              >
+                Landing Page
+                <span
+                  class="absolute bottom-0 left-0 right-0 mx-auto h-0.5 lg:bg-white bg-blueGray-700 transition-all duration-300" :class="[isActive ? 'w-9/12' : 'w-0 group-hover:w-9/12']"
+                ></span>
+              </a>
+            </router-link>
+          </li>
+
+          <li class="flex items-center">
+            <router-link to="/auth/login" v-slot="{ isActive }">
+              <a
+                class="lg:text-white text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold relative group"
+                :class="[!isActive && 'lg:hover:text-blueGray-200']"
+              >
+                Pengaturan
+                <span
+                  class="absolute bottom-0 left-0 right-0 mx-auto h-0.5 lg:bg-white bg-blueGray-700 transition-all duration-300" :class="[isActive ? 'w-9/12' : 'w-0 group-hover:w-9/12']"
+                ></span>
+              </a>
+            </router-link>
+          </li>
+
           <li class="flex items-center">
             <a
               class="lg:text-white lg:hover:text-blueGray-200 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-              href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdemos.creative-tim.com%2Fvue-notus%2F%23%2F"
-              target="_blank"
+              href="https://facebook.com/usernamekamu" target="_blank"
+              title="Facebook"
             >
               <i
                 class="lg:text-blueGray-200 text-blueGray-400 fab fa-facebook text-lg leading-lg"
               />
-              <span class="lg:hidden inline-block ml-2">Share</span>
+              <span class="lg:hidden inline-block ml-2">Facebook</span>
             </a>
           </li>
 
           <li class="flex items-center">
             <a
               class="lg:text-white lg:hover:text-blueGray-200 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-              href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fdemos.creative-tim.com%2Fvue-notus%2F%23%2F&text=Start%20your%20development%20with%20a%20Free%20Tailwind%20CSS%20and%20VueJS%20UI%20Kit%20and%20Admin.%20Let%20Vue%20Notus%20amaze%20you%20with%20its%20cool%20features%20and%20build%20tools%20and%20get%20your%20project%20to%20a%20whole%20new%20level.%20"
-              target="_blank"
+              href="https://twitter.com/usernamekamu" target="_blank"
+              title="Twitter"
             >
               <i
                 class="lg:text-blueGray-200 text-blueGray-400 fab fa-twitter text-lg leading-lg"
               />
-              <span class="lg:hidden inline-block ml-2">Tweet</span>
+              <span class="lg:hidden inline-block ml-2">Twitter</span>
             </a>
           </li>
 
           <li class="flex items-center">
             <a
               class="lg:text-white lg:hover:text-blueGray-200 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-              href="https://github.com/creativetimofficial/vue-notus?ref=vn-auth-navbar"
-              target="_blank"
+              href="https://instagram.com/usernamekamu" target="_blank"
+              title="Instagram"
             >
               <i
-                class="lg:text-blueGray-200 text-blueGray-400 fab fa-github text-lg leading-lg"
+                class="lg:text-blueGray-200 text-blueGray-400 fab fa-instagram text-lg leading-lg"
               />
-              <span class="lg:hidden inline-block ml-2">Star</span>
+              <span class="lg:hidden inline-block ml-2">Instagram</span>
+            </a>
+          </li>
+
+          <li class="flex items-center">
+            <a
+              class="lg:text-white lg:hover:text-blueGray-200 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
+              href="https://tiktok.com/@usernamekamu" target="_blank"
+              title="TikTok"
+            >
+              <i
+                class="lg:text-blueGray-200 text-blueGray-400 fab fa-tiktok text-lg leading-lg"
+              />
+              <span class="lg:hidden inline-block ml-2">TikTok</span>
             </a>
           </li>
         </ul>
@@ -107,7 +142,7 @@
   </nav>
 </template>
 <script>
-import PagesDropdown from "@/components/Dropdowns/PagesDropdown.vue";
+// import PagesDropdown from "@/components/Dropdowns/PagesDropdown.vue"; // Dihapus
 export default {
   data() {
     return {
@@ -120,8 +155,7 @@ export default {
     },
   },
   components: {
-    PagesDropdown,
+    // PagesDropdown, // Dihapus
   },
 };
 </script>
-

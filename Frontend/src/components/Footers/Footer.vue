@@ -20,119 +20,86 @@
       </svg>
     </div>
     <div class="container mx-auto px-4">
-      <div class="flex flex-wrap text-center lg:text-left">
+      <div class="flex flex-wrap text-center lg:text-left lg:items-start">
         <div class="w-full lg:w-6/12 px-4">
-          <h4 class="text-3xl font-semibold">Let's keep in touch!</h4>
+          <h4 class="text-3xl font-semibold text-blueGray-700">Tetap Terhubung!</h4>
           <h5 class="text-lg mt-0 mb-2 text-blueGray-600">
-            Find us on any of these platforms, we respond 1-2 business days.
+            Temukan kami di platform media sosial berikut.
           </h5>
           <div class="mt-6 lg:mb-0 mb-6">
-            <button
-              class="bg-white text-lightBlue-400 shadow-lg font-normal h-10 w-10 items-center justify-center align-center rounded-full outline-none focus:outline-none mr-2"
-              type="button"
+            
+            <a
+              href="https://twitter.com/usernamekamu"
+              target="_blank"
+              class="bg-white text-lightBlue-400 shadow-lg font-normal h-10 w-10 inline-flex items-center justify-center rounded-full outline-none focus:outline-none mr-2"
             >
               <i class="fab fa-twitter"></i>
-            </button>
-            <button
-              class="bg-white text-lightBlue-600 shadow-lg font-normal h-10 w-10 items-center justify-center align-center rounded-full outline-none focus:outline-none mr-2"
-              type="button"
+            </a>
+            
+            <a
+              href="https://facebook.com/usernamekamu"
+              target="_blank"
+              class="bg-white text-lightBlue-600 shadow-lg font-normal h-10 w-10 inline-flex items-center justify-center rounded-full outline-none focus:outline-none mr-2"
             >
               <i class="fab fa-facebook-square"></i>
-            </button>
-            <button
-              class="bg-white text-pink-400 shadow-lg font-normal h-10 w-10 items-center justify-center align-center rounded-full outline-none focus:outline-none mr-2"
-              type="button"
+            </a>
+            
+            <a
+              href="https://instagram.com/usernamekamu"
+              target="_blank"
+              class="bg-white text-pink-400 shadow-lg font-normal h-10 w-10 inline-flex items-center justify-center rounded-full outline-none focus:outline-none mr-2"
             >
-              <i class="fab fa-dribbble"></i>
-            </button>
-            <button
-              class="bg-white text-blueGray-800 shadow-lg font-normal h-10 w-10 items-center justify-center align-center rounded-full outline-none focus:outline-none mr-2"
-              type="button"
+              <i class="fab fa-instagram"></i>
+            </a>
+            
+            <a
+              href="https://tiktok.com/@usernamekamu"
+              target="_blank"
+              class="bg-white text-blueGray-800 shadow-lg font-normal h-10 w-10 inline-flex items-center justify-center rounded-full outline-none focus:outline-none mr-2"
             >
-              <i class="fab fa-github"></i>
-            </button>
+              <i class="fab fa-tiktok"></i>
+            </a>
           </div>
         </div>
         <div class="w-full lg:w-6/12 px-4">
           <div class="flex flex-wrap items-top mb-6">
-            <div class="w-full lg:w-4/12 px-4 ml-auto">
-              <span
-                class="block uppercase text-blueGray-500 text-sm font-semibold mb-2"
-              >
-                Useful Links
-              </span>
-              <ul class="list-unstyled">
-                <li>
-                  <a
-                    class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="https://www.creative-tim.com/presentation?ref=vn-footer"
-                  >
-                    About Us
-                  </a>
-                </li>
-                <li>
-                  <a
-                    class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="https://blog.creative-tim.com?ref=vn-footer"
-                  >
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a
-                    class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="https://www.github.com/creativetimofficial?ref=vn-footer"
-                  >
-                    Github
-                  </a>
-                </li>
-                <li>
-                  <a
-                    class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="https://www.creative-tim.com/bootstrap-themes/free?ref=vn-footer"
-                  >
-                    Free Products
-                  </a>
-                </li>
-              </ul>
-            </div>
             <div class="w-full lg:w-4/12 px-4">
               <span
                 class="block uppercase text-blueGray-500 text-sm font-semibold mb-2"
               >
-                Other Resources
+                Navigasi
               </span>
               <ul class="list-unstyled">
                 <li>
                   <a
                     class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="https://github.com/creativetimofficial/vue-notus/blob/main/LICENSE.md?ref=vn-footer"
+                    href="/program-kerja"
                   >
-                    MIT License
+                    Program Kerja
                   </a>
                 </li>
                 <li>
                   <a
                     class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="https://creative-tim.com/terms?ref=vn-footer"
+                    href="/berita-dan-galeri"
                   >
-                    Terms & Conditions
+                    Berita & Galeri
                   </a>
                 </li>
                 <li>
                   <a
                     class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="https://creative-tim.com/privacy?ref=vn-footer"
+                    href="/landing"
                   >
-                    Privacy Policy
+                    Landing Page
                   </a>
                 </li>
                 <li>
                   <a
                     class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="https://creative-tim.com/contact-us?ref=vn-footer"
+                    href="/auth/login"
                   >
-                    Contact Us
+                    Pengaturan
                   </a>
                 </li>
               </ul>
@@ -146,14 +113,7 @@
       >
         <div class="w-full md:w-4/12 px-4 mx-auto text-center">
           <div class="text-sm text-blueGray-500 font-semibold py-1">
-            Copyright © {{ date }} Vue Notus by
-            <a
-              href="https://www.creative-tim.com?ref=vn-footer"
-              class="text-blueGray-500 hover:text-blueGray-800"
-            >
-              Creative Tim
-            </a>
-            .
+            Copyright © {{ date }} OSIS & MPK SMK NURUL ISLAM CIANJUR.
           </div>
         </div>
       </div>

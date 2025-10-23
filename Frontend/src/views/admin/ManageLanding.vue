@@ -50,7 +50,11 @@
 </template>
 <script>
 import axios from "axios";
-const API_URL = 'http://localhost:8000/api/page/landing';
+// ======================================================
+// ==                  PERBAIKI URL DI SINI              ==
+// ======================================================
+const API_URL = 'http://localhost:8000/api/page-content/landing'; // <-- Ganti ke page-content
+// ======================================================
 
 export default {
   data() {
@@ -74,8 +78,11 @@ export default {
     },
     async fetchContent() {
       try {
+        // Sekarang menggunakan URL yang benar
         const response = await axios.get(API_URL);
-        this.content = response.data;
+        // Periksa struktur response. Mungkin data ada di response.data.data?
+        // Sesuaikan berdasarkan response API Anda yang sebenarnya
+        this.content = response.data.data || response.data; 
       } catch (error) {
         console.error("Gagal memuat data:", error);
         alert("Gagal memuat data yang ada.");
@@ -85,26 +92,31 @@ export default {
       const formData = new FormData();
       formData.append('title', this.content.title || '');
       formData.append('subtitle', this.content.subtitle || '');
-      
+
       if (this.selectedFile) {
         formData.append('hero_image_file', this.selectedFile);
       }
 
-      // PERBAIKAN: Baris yang menyebabkan error dihapus.
-      // Kita akan mengirim sebagai POST murni, yang sudah didukung oleh backend.
-      
+      // ======================================================
+      // == PERBAIKI METODE: GUNAKAN POST DENGAN _method=PUT ==
+      // ==      (Cara umum untuk file upload via PUT)       ==
+      // ======================================================
+      formData.append('_method', 'PUT'); // <-- Tambahkan ini untuk Laravel
+
       try {
+        // Tetap gunakan POST, tapi URL benar & ada _method=PUT
         const response = await axios.post(API_URL, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
         });
-        alert(response.data.message);
-        // Muat ulang data untuk menampilkan gambar baru
-        this.fetchContent(); 
-        // Reset pilihan file
+        // ======================================================
+        alert(response.data.message || 'Berhasil disimpan!'); // Pesan sukses
+        this.fetchContent();
         this.selectedFile = null;
-        this.$refs.fileInput.value = ''; 
+        if (this.$refs.fileInput) { // Cek jika ref ada
+             this.$refs.fileInput.value = '';
+        }
       } catch (error) {
         console.error("Gagal menyimpan data:", error.response ? error.response.data : error.message);
         alert("Gagal menyimpan data!");
@@ -116,4 +128,3 @@ export default {
   },
 };
 </script>
-
