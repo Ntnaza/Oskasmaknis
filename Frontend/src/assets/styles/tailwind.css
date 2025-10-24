@@ -12820,8 +12820,8 @@ select {
   margin: -4rem;
 }
 
-.-m-24 {
-  margin: -6rem;
+.-m-36 {
+  margin: -9rem;
 }
 
 .my-2 {
@@ -13020,6 +13020,10 @@ select {
 
 .-mb-px {
   margin-bottom: -1px;
+}
+
+.last\:mr-0:last-child {
+  margin-right: 0px;
 }
 
 .hover\:-mt-4:hover {
@@ -43981,6 +43985,10 @@ select {
             order: 3;
   }
 
+  .lg\:mt-0 {
+    margin-top: 0px;
+  }
+
   .lg\:mb-0 {
     margin-bottom: 0px;
   }
@@ -54348,10 +54356,6 @@ select {
   .xl\:disabled\:text-red-500:disabled {
     --tw-text-opacity: 1;
     color: rgba(239, 68, 68, var(--tw-text-opacity));
-  }
-
-  .xl\:w-3\/12 {
-    width: 25%;
   }
 
   .xl\:w-4\/12 {
