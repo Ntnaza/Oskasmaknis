@@ -2,6 +2,8 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Controller yang sudah ada
 use App\Http\Controllers\PageContentController;
 use App\Http\Controllers\FeatureController;
 use App\Http\Controllers\ContentBlockController;
@@ -9,6 +11,11 @@ use App\Http\Controllers\TeamMemberController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WorkProgramController;
 use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\SettingController;
+use App\Http\Controllers\Api\AspirationController;
+
+// Controller API kita
+use App\Http\Controllers\Api\EventController; 
 
 /*
 |--------------------------------------------------------------------------
@@ -16,41 +23,77 @@ use App\Http\Controllers\ArticleController;
 |--------------------------------------------------------------------------
 */
 
-// Rute ini sudah ada, kita biarkan saja
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
 
-// Rute untuk Page Content (Landing Hero, Judul Halaman Index)
-// DIGANTI: dari '/page/{slug}' menjadi '/page-content/{slug}' agar cocok dengan frontend
-// DIGANTI: dari 'post' menjadi 'put' untuk update
+// Rute-rute lama Anda
 Route::get('/page-content/{slug}', [PageContentController::class, 'show']);
 Route::put('/page-content/{slug}', [PageContentController::class, 'update']);
-
-
-// Rute untuk Content Blocks
-// DITAMBAHKAN: Rute-rute ini dibutuhkan oleh Pinia store kita
 Route::get('/content-blocks', [ContentBlockController::class, 'index']);
 Route::post('/content-blocks/update-bulk', [ContentBlockController::class, 'updateBulk']);
-
-
-// Rute-rute lama Anda yang mungkin masih digunakan di bagian lain
-// Kita biarkan saja agar tidak merusak fungsionalitas yang sudah ada
 Route::apiResource('features', FeatureController::class);
 Route::get('/content-block/{key}', [ContentBlockController::class, 'show']);
 Route::post('/content-block/{key}', [ContentBlockController::class, 'update']);
+
+// Rute Team Member (dengan urutan benar)
+
+// --- TAMBAHAN BARU UNTUK SERVE FOTO ---
+Route::get('team-members/{teamMember}/photo', [TeamMemberController::class, 'servePhoto'])
+     ->name('team-members.photo');
+// ------------------------------------
+
+Route::get('team-members/{teamMember}/qrcode', [TeamMemberController::class, 'generateQrCode'])
+     ->name('team-members.qrcode');
 Route::apiResource('team-members', TeamMemberController::class);
+
 Route::get('/profile', [ProfileController::class, 'show']);
 Route::post('/profile', [ProfileController::class, 'update']);
-// ... rute lain ...
 Route::apiResource('work-programs', WorkProgramController::class);
-
-// Rute Spesifik untuk Artikel
 Route::get('/articles/latest', [ArticleController::class, 'fetchLatest']);
 Route::get('/all-articles', [ArticleController::class, 'fetchAll']);
-
-// Rute Umum untuk Artikel (setelah rute spesifik)
 Route::apiResource('articles', ArticleController::class);
-
 Route::get('/work-programs-selection', [WorkProgramController::class, 'getAllForSelection']);
+
+
+// ======================================================
+// ==         RUTE BARU UNTUK ABSENSI DIGITAL          ==
+// ======================================================
+
+Route::get('admin/events/{event}/qrcode', [EventController::class, 'generateQrCode'])
+     ->name('admin.events.qrcode');
+Route::post('/admin/events/{event}/attend', [EventController::class, 'scanMemberAttendance']);
+Route::post('/settings/background', [SettingController::class, 'updateBackground']);
+Route::get('/settings/background', [SettingController::class, 'getBackground']);
+
+// --- INI ADALAH BARIS YANG DIPERBAIKI (Route::post) ---
+Route::post('admin/events/{event}/scan-member', [EventController::class, 'scanMemberAttendance'])
+     ->name('admin.events.scan-member');
+// --------------------------------------------------
+
+Route::apiResource('admin/events', EventController::class);
+
+
+// ======================================================
+// ==         RUTE BARU UNTUK KOTAK ASPIRASI           ==
+// ======================================================
+
+// Rute Publik (Untuk siswa mengirim aspirasi)
+Route::post('/aspirations', [AspirationController::class, 'store']);
+Route::get('/aspirations/track/{ticket_id}', [AspirationController::class, 'track']);
+
+// --- 1. RUTE BARU UNTUK GALERI PUBLIK ---
+Route::get('/aspirations/public', [AspirationController::class, 'getPublicAspirations']);
+// ----------------------------------------
+
+// Rute Admin (Untuk mengelola aspirasi di dasbor)
+Route::prefix('admin')->group(function () {
+    Route::get('/aspirations', [AspirationController::class, 'index']);
+    Route::get('/aspirations/{aspiration}', [AspirationController::class, 'show']);
+    Route::put('/aspirations/{aspiration}', [AspirationController::class, 'update']);
+    Route::delete('/aspirations/{aspiration}', [AspirationController::class, 'destroy']);
+});
+// ======================================================
+// ==              AKHIR RUTE BARU                     ==
+// ======================================================

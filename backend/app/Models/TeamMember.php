@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+// Kita tidak perlu BelongsToMany atau Event di sini
+// use Illuminate\Database\Eloquent\Relations\BelongsToMany; 
+// use App\Models\Event; 
+
 class TeamMember extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    // Ini semua dari kode Anda, sudah benar
     protected $fillable = [
         'name',
         'position',
@@ -25,32 +25,42 @@ class TeamMember extends Model
         'order',
     ];
 
-    /**
-     * The attributes that should be cast.
-     * Atribut ini secara otomatis mengubah data dari JSON di database
-     * menjadi array PHP saat diakses, dan sebaliknya.
-     *
-     * @var array<string, string>
-     */
+    // Ini dari kode Anda, sudah benar
     protected $casts = [
-        // Contoh: ['instagram' => 'url', 'facebook' => 'url']
         'social_links' => 'array',
-
-        // PENAMBAHAN: Dokumentasi struktur untuk bio_data
-        // Contoh: [
-        //   'sambutan' => '...',
-        //   'visi_misi' => '...',
-        //   'prestasi' => ['...', '...']
-        // ]
         'bio_data' => 'array',
     ];
 
-    /**
-     * Mendefinisikan relasi ke Program Kerja.
-     */
+    // Ini dari kode Anda, sudah benar
     public function workPrograms(): HasMany
     {
         return $this->hasMany(WorkProgram::class);
     }
-}
 
+    
+    // --- INI ADALAH PERBAIKANNYA ---
+
+    /**
+     * Relasi: Satu Anggota memiliki BANYAK data absensi.
+     */
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    /**
+     * Relasi: Satu Anggota bisa menghadiri BANYAK Event
+     * (melalui tabel Attendance)
+     */
+    public function eventsAttended()
+    {
+        return $this->hasManyThrough(
+            Event::class,
+            Attendance::class,
+            'team_member_id', // Foreign key di tabel perantara (attendances)
+            'id',             // Foreign key di tabel tujuan (events)
+            'id',             // Local key di tabel ini (team_members)
+            'event_id'        // Local key di tabel perantara (attendances)
+        );
+    }
+}

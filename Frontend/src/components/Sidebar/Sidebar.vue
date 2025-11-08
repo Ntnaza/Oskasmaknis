@@ -127,6 +127,15 @@
           </li>
           
           <li class="items-center">
+            <router-link to="/admin/kartu-anggota" v-slot="{ href, navigate, isActive }">
+              <a :href="href" @click="navigate" class="text-xs uppercase py-3 font-bold block"
+                 :class="[isActive ? 'text-emerald-500 hover:text-emerald-600' : 'text-blueGray-700 hover:text-blueGray-500']">
+                <i class="fas fa-address-card mr-2 text-sm" :class="[isActive ? 'opacity-75' : 'text-blueGray-300']"></i>
+                Kartu Anggota
+              </a>
+            </router-link>
+          </li>
+          <li class="items-center">
             <router-link to="/admin/manage-work-programs" v-slot="{ href, navigate, isActive }">
               <a :href="href" @click="navigate" class="text-xs uppercase py-3 font-bold block"
                  :class="[isActive ? 'text-emerald-500 hover:text-emerald-600' : 'text-blueGray-700 hover:text-blueGray-500']">
@@ -146,6 +155,25 @@
             </router-link>
           </li>
 
+          <li class="items-center">
+            <router-link to="/admin/manage-events" v-slot="{ href, navigate, isActive }">
+              <a :href="href" @click="navigate" class="text-xs uppercase py-3 font-bold block"
+                 :class="[isActive ? 'text-emerald-500 hover:text-emerald-600' : 'text-blueGray-700 hover:text-blueGray-500']">
+                <i class="fas fa-calendar-check mr-2 text-sm" :class="[isActive ? 'opacity-75' : 'text-blueGray-300']"></i>
+                Kelola Event
+              </a>
+            </router-link>
+          </li>
+          
+          <li class="items-center">
+            <router-link to="/admin/manage-aspirations" v-slot="{ href, navigate, isActive }">
+              <a :href="href" @click="navigate" class="text-xs uppercase py-3 font-bold block"
+                 :class="[isActive ? 'text-emerald-500 hover:text-emerald-600' : 'text-blueGray-700 hover:text-blueGray-500']">
+                <i class="fas fa-inbox mr-2 text-sm" :class="[isActive ? 'opacity-75' : 'text-blueGray-300']"></i>
+                Kelola Aspirasi
+              </a>
+            </router-link>
+          </li>
           <li class="items-center">
             <router-link
               to="/admin/manage-index"

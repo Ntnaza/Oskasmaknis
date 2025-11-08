@@ -1,6 +1,7 @@
 import { createApp } from "vue";
 import { createPinia } from "pinia";
 import { createWebHistory, createRouter } from "vue-router";
+import axios from "axios"; // <-- IMPORT AXIOS
 
 // styles
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -27,18 +28,25 @@ import ManageFeatures from "@/views/admin/ManageFeatures.vue";
 import ManagePromo from "@/views/admin/ManagePromo.vue";
 import ManageTeam from "@/views/admin/ManageTeam.vue";
 // --- Komponen CRUD Index ---
-// Hapus file lama jika sudah tidak terpakai
-// import ManageIndex from "@/views/admin/ManageIndex.vue"; 
 import ManageIndexHero from "@/views/admin/index-tabs/ManageIndexHero.vue";
 import ManageIndexSambutan from "@/views/admin/index-tabs/ManageIndexSambutan.vue";
 import ManageIndexPembina from "@/views/admin/index-tabs/ManageIndexPembina.vue";
 import ManageIndexJurusan from "@/views/admin/index-tabs/ManageIndexJurusan.vue";
 import ManageIndexSejarah from "@/views/admin/index-tabs/ManageIndexSejarah.vue";
-import ManageIndexAjakan from "@/views/admin/index-tabs/ManageIndexAjakan.vue"; // <-- TAMBAHKAN INI
+import ManageIndexAjakan from "@/views/admin/index-tabs/ManageIndexAjakan.vue";
 // --- Halaman admin lainnya ---
 import ManageProfile from "@/views/admin/ManageProfile.vue";
 import ManageWorkPrograms from "@/views/admin/ManageWorkPrograms.vue";
 import ManageArticles from "@/views/admin/ManageArticles.vue";
+// --- Halaman Event ---
+import ManageEvents from "@/views/admin/ManageEvents.vue";
+import EventDetail from "@/views/admin/EventDetail.vue";
+
+import MemberCardGenerator from "@/views/admin/MemberCardGenerator.vue";
+import CardPrintPage from "@/views/admin/CardPrintPage.vue";
+
+// --- 1. IMPORT BARU UNTUK ADMIN ASPIRASI ---
+import ManageAspirations from "@/views/admin/ManageAspirations.vue";
 
 // views for Auth layout
 import Login from "@/views/auth/Login.vue";
@@ -52,9 +60,24 @@ import WorkPrograms from "@/views/WorkPrograms.vue";
 import AnggotaDetail from "@/views/AnggotaDetail.vue";
 import ArticlesIndex from "@/views/ArticlesIndex.vue";
 import BeritaDetail from "@/views/BeritaDetail.vue";
+// (ScanAttendance.vue sudah dihapus, bagus)
+
+// --- IMPORT BARU UNTUK ASPIRASI ---
+import SubmitAspiration from "@/views/SubmitAspiration.vue";
+import TrackAspiration from "@/views/TrackAspiration.vue";
+// ----------------------------------
+
+// --- KONFIGURASI BASE URL GLOBAL AXIOS ---
+axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000';
+// --- BATAS KONFIGURASI ---
 
 // routes
 const routes = [
+  {
+    path: "/admin/kartu-cetak",
+    component: CardPrintPage,
+    name: "admin-kartu-cetak",
+  },
   {
     path: "/admin",
     redirect: "/admin/dashboard",
@@ -80,7 +103,6 @@ const routes = [
         component: Maps,
         name: "admin-maps",
       },
-      // --- ROUTE KELOLA LANDING (Sudah Benar) ---
       {
         path: "/admin/kelola-landing",
         component: KelolaLandingLayout,
@@ -92,8 +114,6 @@ const routes = [
           { path: "tim", name: "admin-kelola-landing-tim", component: ManageTeam },
         ],
       },
-      
-      // --- ROUTE KELOLA INDEX (DIPERBARUI) ---
       {
         path: "/admin/manage-index",
         component: KelolaIndexLayout,
@@ -104,12 +124,9 @@ const routes = [
           { path: "pembina", name: "admin-index-pembina", component: ManageIndexPembina },
           { path: "jurusan", name: "admin-index-jurusan", component: ManageIndexJurusan },
           { path: "sejarah", name: "admin-index-sejarah", component: ManageIndexSejarah },
-          // === GANTI KOMPONEN 'ajakan' ===
-          { path: "ajakan", name: "admin-index-ajakan", component: ManageIndexAjakan }, // <-- Sudah diganti
+          { path: "ajakan", name: "admin-index-ajakan", component: ManageIndexAjakan },
         ],
       },
-
-      // --- Halaman admin lainnya ---
       {
         path: "/admin/manage-profile",
         component: ManageProfile,
@@ -125,6 +142,29 @@ const routes = [
         component: ManageArticles,
         name: "admin-manage-articles",
       },
+      {
+        path: "/admin/manage-events", 
+        component: ManageEvents,
+        name: "admin-manage-events",
+      },
+      {
+        path: "/admin/event/:id", 
+        component: EventDetail,
+        name: "admin-event-detail",
+        props: true 
+      },
+      {
+        path: "/admin/kartu-anggota",
+        component: MemberCardGenerator,
+        name: "admin-kartu-anggota",
+      },
+      // --- 2. RUTE BARU DITAMBAHKAN DI SINI ---
+      {
+        path: "/admin/manage-aspirations",
+        component: ManageAspirations,
+        name: "admin-manage-aspirations",
+      },
+      // -------------------------------------
     ],
   },
   {
@@ -143,6 +183,26 @@ const routes = [
   { path: "/berita-dan-galeri", component: ArticlesIndex, name: "berita-dan-galeri" },
   { path: "/berita/:slug", name: "berita-detail", component: BeritaDetail, props: true },
   { path: "/", component: Index, name: "index" },
+  
+  // --- RUTE PUBLIK ASPIRASI (Sudah benar) ---
+  { 
+    path: "/aspirasi", 
+    component: SubmitAspiration, 
+    name: "submit-aspirasi",
+  },
+  { 
+    path: "/aspirasi/lacak", 
+    component: TrackAspiration, 
+    name: "track-aspirasi-form",
+  },
+  { 
+    path: "/aspirasi/lacak/:ticket_id", 
+    component: TrackAspiration, 
+    name: "track-aspirasi-detail", 
+    props: true 
+  },
+  // ---------------------------------
+
   { path: "/:pathMatch(.*)*", redirect: "/" },
 ];
 

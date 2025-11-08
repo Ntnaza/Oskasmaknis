@@ -10,8 +10,8 @@
         <span
           class="w-10 h-10 text-sm text-white bg-blueGray-200 inline-flex items-center justify-center rounded-full"
         >
-           <i class="fas fa-user"></i>
-          </span>
+          <i class="fas fa-user"></i>
+        </span>
       </div>
     </a>
 
@@ -25,7 +25,7 @@
     >
       <router-link
         to="/admin/profile" class="text-sm py-2 px-4 font-normal block w-full whitespace-nowrap bg-transparent text-blueGray-700 hover:bg-blueGray-100"
-         @click="closeDropdownOnly" >
+        @click="closeDropdownOnly" >
         <i class="fas fa-user-circle mr-2"></i> Profil
       </router-link>
 

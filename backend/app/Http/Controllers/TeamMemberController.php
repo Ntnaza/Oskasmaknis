@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\TeamMember;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log; // <-- Tambahkan ini
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage; // <-- Pastikan ini ada
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException; // <-- Tambahkan ini
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str; 
+use SimpleSoftwareIO\QrCode\Facades\QrCode; 
 
 class TeamMemberController extends Controller
 {
@@ -24,47 +26,30 @@ class TeamMemberController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('Store request data (raw):', $request->all()); // Debug
+        Log::info('Store request data (raw):', $request->all());
 
-        // Decode JSON string jika ada
-        $socialLinksData = $request->input('social_links') && is_string($request->input('social_links'))
-            ? json_decode($request->input('social_links'), true)
-            : ($request->input('social_links') ?? []); // Default array kosong jika null/sudah array
-        $bioData = $request->input('bio_data') && is_string($request->input('bio_data'))
-            ? json_decode($request->input('bio_data'), true)
-            : ($request->input('bio_data') ?? []); // Default array kosong
-
-        // Handle JSON decode error
-        if ($request->input('social_links') && is_string($request->input('social_links')) && json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json(['message' => 'Format social_links JSON tidak valid.'], 400);
+        // --- PRE-PROCESSING DATA FORM ---
+        $data = $request->all();
+        if ($request->has('social_links') && is_string($request->input('social_links'))) {
+            $data['social_links'] = json_decode($request->input('social_links'), true);
         }
-        if ($request->input('bio_data') && is_string($request->input('bio_data')) && json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json(['message' => 'Format bio_data JSON tidak valid.'], 400);
+        if ($request->has('bio_data') && is_string($request->input('bio_data'))) {
+            $data['bio_data'] = json_decode($request->input('bio_data'), true);
         }
-
-        // Merge data yang sudah di-decode ke request untuk validasi
-        $request->merge([
-            'social_links' => is_array($socialLinksData) ? $socialLinksData : [], // Pastikan array
-            'bio_data' => is_array($bioData) ? $bioData : [], // Pastikan array
-        ]);
-
-        Log::info('Store request data (after merge):', $request->all()); // Debug
-
+        $request->replace($data);
+        // --- BATAS PRE-PROCESSING ---
+        
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'position' => 'required|string|max:255',
                 'order' => 'required|integer|min:0',
-                'photo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048', // Max 2MB
-                'header_photo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // Max 5MB
-
-                // Validasi social_links sebagai array (setelah decode)
-                'social_links' => 'nullable|array',
-                'social_links.*.platform' => 'sometimes|required|string', // Validasi tiap item dalam array
-                'social_links.*.url' => 'sometimes|required|string',    // Pertimbangkan validasi 'url' jika perlu format URL ketat
-
-                // Validasi bio_data sebagai array (setelah decode)
-                'bio_data' => 'nullable|array',
+                'photo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+                'header_photo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+                'social_links' => 'nullable|array', 
+                'social_links.*.platform' => 'sometimes|required|string',
+                'social_links.*.url' => 'sometimes|required|string',
+                'bio_data' => 'nullable|array', 
                 'bio_data.jurusan' => 'nullable|string|max:255',
                 'bio_data.ttl' => 'nullable|string|max:255',
                 'bio_data.hobi' => 'nullable|string|max:255',
@@ -74,7 +59,7 @@ class TeamMemberController extends Controller
                 'bio_data.prestasi.*' => 'nullable|string',
             ]);
 
-            Log::info('Store validated data:', $validated); // Debug
+            Log::info('Store validated data:', $validated);
 
             if ($request->hasFile('photo_file')) {
                 $validated['photo_path'] = $request->file('photo_file')->store('team_photos', 'public');
@@ -83,12 +68,13 @@ class TeamMemberController extends Controller
                 $validated['header_photo_path'] = $request->file('header_photo_file')->store('team_headers', 'public');
             }
 
-            // Hapus key file dari $validated agar tidak mencoba disimpan ke DB
             unset($validated['photo_file']);
             unset($validated['header_photo_file']);
-
-            $teamMember = TeamMember::create($validated);
-
+            
+            $teamMember = new TeamMember($validated);
+            $teamMember->member_token = (string) Str::uuid(); // Buat token permanen
+            $teamMember->save(); 
+            
             return response()->json(['message' => 'Anggota tim baru berhasil ditambahkan!', 'data' => $teamMember], 201);
 
         } catch (ValidationException $e) {
@@ -108,7 +94,6 @@ class TeamMemberController extends Controller
      */
     public function show(TeamMember $teamMember)
     {
-        // Fungsi ini sudah benar
         return $teamMember->load('workPrograms');
     }
 
@@ -117,31 +102,18 @@ class TeamMemberController extends Controller
      */
     public function update(Request $request, TeamMember $teamMember)
     {
-        Log::info('Update request data (raw):', $request->all()); // Debug
+        Log::info('Update request data (raw):', $request->all());
 
-        // Decode JSON string jika ada
-        $socialLinksData = $request->input('social_links') && is_string($request->input('social_links'))
-            ? json_decode($request->input('social_links'), true)
-            : ($request->input('social_links') ?? []);
-        $bioData = $request->input('bio_data') && is_string($request->input('bio_data'))
-            ? json_decode($request->input('bio_data'), true)
-            : ($request->input('bio_data') ?? []);
-
-        // Handle JSON decode error
-        if ($request->input('social_links') && is_string($request->input('social_links')) && json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json(['message' => 'Format social_links JSON tidak valid.'], 400);
+        // --- PRE-PROCESSING DATA FORM ---
+        $data = $request->all();
+        if ($request->has('social_links') && is_string($request->input('social_links'))) {
+            $data['social_links'] = json_decode($request->input('social_links'), true);
         }
-        if ($request->input('bio_data') && is_string($request->input('bio_data')) && json_last_error() !== JSON_ERROR_NONE) {
-            return response()->json(['message' => 'Format bio_data JSON tidak valid.'], 400);
+        if ($request->has('bio_data') && is_string($request->input('bio_data'))) {
+            $data['bio_data'] = json_decode($request->input('bio_data'), true);
         }
-
-        // Merge data yang sudah di-decode ke request untuk validasi
-        $request->merge([
-            'social_links' => is_array($socialLinksData) ? $socialLinksData : [],
-            'bio_data' => is_array($bioData) ? $bioData : [],
-        ]);
-
-         Log::info('Update request data (after merge):', $request->all()); // Debug
+        $request->replace($data);
+        // --- BATAS PRE-PROCESSING ---
 
         try {
              $validated = $request->validate([
@@ -150,14 +122,10 @@ class TeamMemberController extends Controller
                 'order' => 'required|integer|min:0',
                 'photo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
                 'header_photo_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-
-                // Validasi social_links sebagai array (setelah decode)
-                'social_links' => 'nullable|array',
+                'social_links' => 'nullable|array', 
                 'social_links.*.platform' => 'sometimes|required|string',
                 'social_links.*.url' => 'sometimes|required|string',
-
-                // Validasi bio_data sebagai array (setelah decode)
-                'bio_data' => 'nullable|array',
+                'bio_data' => 'nullable|array', 
                 'bio_data.jurusan' => 'nullable|string|max:255',
                 'bio_data.ttl' => 'nullable|string|max:255',
                 'bio_data.hobi' => 'nullable|string|max:255',
@@ -167,9 +135,8 @@ class TeamMemberController extends Controller
                 'bio_data.prestasi.*' => 'nullable|string',
             ]);
 
-            Log::info('Update validated data:', $validated); // Debug
+            Log::info('Update validated data:', $validated);
 
-            // Handle file update (hapus yang lama jika ada baru)
             if ($request->hasFile('photo_file')) {
                 if ($teamMember->photo_path) {
                     Storage::disk('public')->delete($teamMember->photo_path);
@@ -184,15 +151,12 @@ class TeamMemberController extends Controller
                 $validated['header_photo_path'] = $request->file('header_photo_file')->store('team_headers', 'public');
             }
 
-            // Hapus key file dari $validated
             unset($validated['photo_file']);
             unset($validated['header_photo_file']);
 
             $teamMember->update($validated);
-
-            // Ambil data terbaru setelah update
             $updatedMember = $teamMember->fresh();
-            Log::info('Updated team member data:', $updatedMember->toArray()); // Debug
+            Log::info('Updated team member data:', $updatedMember->toArray());
 
             return response()->json(['message' => 'Anggota tim berhasil diperbarui!', 'data' => $updatedMember]);
 
@@ -226,5 +190,52 @@ class TeamMemberController extends Controller
             Log::error('Error deleting team member:', ['message' => $e->getMessage()]);
              return response()->json(['message' => 'Terjadi kesalahan saat menghapus data.'], 500);
         }
+    }
+
+    /**
+     * Men-generate dan mengembalikan gambar QR code (SVG) untuk anggota.
+     */
+    public function generateQrCode(TeamMember $teamMember)
+    {
+        $token = $teamMember->member_token;
+
+        if (!$token) {
+            return response()->json([
+                'message' => 'Token untuk anggota ini belum di-generate. Coba jalankan "php artisan members:generate-tokens"'
+            ], 404);
+        }
+
+        $svg = QrCode::format('svg')
+                     ->size(250) 
+                     ->margin(1)
+                     ->generate($token);
+
+        return response($svg)->header('Content-Type', 'image/svg+xml');
+    }
+
+    // --- METHOD BARU UNTUK SERVE FOTO (SOLUSI CORS) ---
+
+    /**
+     * Menyajikan file foto anggota dengan header CORS yang benar.
+     */
+    public function servePhoto(TeamMember $teamMember)
+    {
+        $path = $teamMember->photo_path;
+
+        // Cek apakah file ada di disk 'public'
+        if (!$path || !Storage::disk('public')->exists($path)) {
+            // Jika tidak ada, bisa kembalikan 404
+            abort(404, 'File foto tidak ditemukan.');
+        }
+
+        // Ambil file dari storage
+        $file = Storage::disk('public')->get($path);
+        
+        // Dapatkan tipe mime (misal: 'image/png')
+        $mimeType = Storage::disk('public')->mimeType($path);
+
+        // Kembalikan file sebagai respons yang benar
+        // Respons ini akan otomatis melewati middleware CORS
+        return response($file, 200)->header('Content-Type', $mimeType);
     }
 }
