@@ -277,17 +277,25 @@
       </div>
     </div>
 
-    <div class="flex flex-wrap justify-between items-center mb-6 px-4">
-        <div class="w-full md:w-1/2 lg:w-1/3 mb-4 md:mb-0">
-          <div class="relative flex w-full flex-wrap items-stretch">
-            <span class="z-10 h-full leading-snug font-normal text-center text-blueGray-300 absolute bg-transparent rounded text-base items-center justify-center w-8 pl-3 py-3">
-              <i class="fas fa-search"></i>
-            </span>
-            <input type="text" v-model="publicAspirationSearch" @keydown.enter.prevent="applyPublicAspirationFilters" placeholder="Cari berdasarkan judul..." class="border-gray-300 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full pl-10"/>
-          </div>
+    <div class="flex flex-wrap justify-end items-center mb-6 px-4 gap-4">
+      
+      <div class="w-full sm:w-auto mb-4 sm:mb-0">
+        <div class="relative flex w-full flex-wrap items-stretch">
+          <span class="z-10 h-full leading-snug font-normal text-center text-blueGray-300 absolute bg-transparent rounded text-base items-center justify-center w-8 pl-3 py-3">
+            <i class="fas fa-search"></i>
+          </span>
+          <input type="text" v-model="publicAspirationSearch" @keydown.enter.prevent="applyPublicAspirationFilters" placeholder="Cari berdasarkan judul..." class="border-gray-300 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full sm:min-w-[250px] pl-10"/>
         </div>
-        <div class="w-full md:w-1/2 lg:w-1/4">
-          <select v-model="publicAspirationCategory" @change="applyPublicAspirationFilters" class="border-gray-300 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full">
+      </div>
+      
+      <div class="w-full sm:w-auto">
+        <div class="relative flex w-full flex-wrap items-stretch">
+
+          <span class="z-10 h-full leading-snug font-normal text-center text-blueGray-300 absolute bg-transparent rounded text-base items-center justify-center w-8 pl-3 py-3">
+            <i class="fas fa-filter"></i> </span>
+
+          <select v-model="publicAspirationCategory" @change="applyPublicAspirationFilters" class="border-gray-300 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full sm:min-w-[200px] 
+                  pl-10 pr-10 ">
             <option value="">Semua Kategori</option>
             <option value="Fasilitas">Fasilitas</option>
             <option value="Akademik">Akademik</option>
@@ -296,6 +304,8 @@
             <option value="Lainnya">Lainnya</option>
           </select>
         </div>
+      </div>
+    
     </div>
 
     <div v-if="publicAspirationsLoading" class="text-center py-10">
@@ -375,7 +385,7 @@
         <div class="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded-lg bg-white">
           <div class="flex-auto p-5 lg:p-10 relative overflow-hidden">
             
-            <form @submit.prevent="submitAspiration" v-if="!successMessage">
+            <form @submit.prevent="submitAspiration">
               <div class="flex flex-wrap">
                   <div class="w-full lg:w-6/12 pr-0 lg:pr-4">
                     <div class="relative w-full mb-3">
@@ -403,11 +413,22 @@
               </div>
 
               <div class="relative w-full mb-3">
-                <label class="block uppercase text-blueGray-600 text-xs font-bold mb-2" htmlFor="message">
-                  Isi Aspirasi <span class="text-red-500">*</span>
-                </label>
-                <textarea v-model="form.message" id="message" class="border-gray-300 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150" rows="4" placeholder="Jelaskan aspirasi Anda secara detail..." required></textarea>
-              </div>
+              <label class="block uppercase text-blueGray-600 text-xs font-bold mb-2" htmlFor="message">
+                Isi Aspirasi <span class="text-red-500">*</span>
+              </label>
+              <textarea 
+                v-model="form.message" 
+                id="message" 
+                class="border-gray-300 px-3 py-3 placeholder-blueGray-300 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full ease-linear transition-all duration-150" 
+                rows="4" 
+                placeholder="Jelaskan aspirasi Anda secara detail..." 
+                required
+                maxlength="500" ></textarea>
+              
+              <small class="text-blueGray-500 text-xs float-right mt-1">
+                {{ form.message.length }} / 500
+              </small>
+            </div>
 
               <div class="relative w-full mb-3">
                 <label class="block uppercase text-blueGray-600 text-xs font-bold mb-2">
@@ -472,30 +493,12 @@
               </div>
             </form>
             
-            <div v-if="successMessage" class="text-center py-10 px-6">
-              <canvas id="confetti-canvas" class="absolute top-0 left-0 w-full h-full z-0"></canvas>
+           
+             
               
-              <div class="relative z-10">
-                <div class="text-green-500 mb-4">
-                  <i class="fas fa-check-circle fa-5x"></i>
-                </div>
-                <h3 class="text-3xl font-semibold text-blueGray-700 mb-2">
-                  Aspirasi Terkirim!
-                </h3>
-                <p class="text-lg text-blueGray-500 mb-6">
-                  Terima kasih telah menyampaikan aspirasi Anda. Kami akan segera meninjaunya.
-                </p>
-                <button @click="resetForm" class="bg-blueGray-700 text-white font-bold px-6 py-3 rounded outline-none focus:outline-none mr-1 mb-1 uppercase text-sm shadow hover:shadow-lg ease-linear transition-all duration-150">
-                  Kirim Aspirasi Lain
-                </button>
-              </div>
-            </div>
+              
+            
 
-            <div v-if="errorMessage" class="text-center p-6 rounded-lg bg-red-100 text-red-800">
-               <i class="fas fa-exclamation-triangle fa-2x text-red-600 mb-3"></i>
-               <h4 class="text-xl font-semibold text-red-800 mb-2">Oops! Terjadi Kesalahan</h4>
-               <p>{{ errorMessage }}</p>
-            </div>
             
           </div>
         </div>
@@ -616,9 +619,11 @@ import IndexNavbar from "@/components/Navbars/IndexNavbar.vue";
 // eslint-disable-next-line no-unused-vars
 import FooterComponent from "@/components/Footers/Footer.vue";
 
-// --- IMPORT BARU UNTUK FORM ---
+// --- IMPORT BARU ---
 import axios from 'axios';
-import confetti from 'canvas-confetti'; // <-- [UPDATE 3] Import Confetti
+import confetti from 'canvas-confetti';
+import Swal from 'sweetalert2'; // <-- IMPORT SWEETALERT
+import 'sweetalert2/dist/sweetalert2.min.css'; // <-- IMPORT CSS-NYA
 
 // eslint-disable-next-line no-unused-vars
 const backendUrl = 'http://localhost:8000';
@@ -636,84 +641,72 @@ const logos = ref([
 const activeLogoIndex = ref(0);
 let intervalId = null;
 
-// --- LOGIKA UNTUK KOTAK ASPIRASI (FORMULIR) ---
+// --- LOGIKA KOTAK ASPIRASI ---
 const isAnonim = ref(false);
-const hoverRating = ref(0); // <-- Logika untuk hover bintang
+const hoverRating = ref(0);
 const form = ref({
   subject: '',
   category: '',
   message: '',
-  rating: 0, // <-- Nilai rating (1-5)
+  rating: 0,
   name: '',
   contact: '',
   attachment: null,
 });
-const formErrors = ref({}); // <-- [UPDATE 1] Ref untuk menampung error validasi
+const formErrors = ref({});
 const isLoading = ref(false);
-const successMessage = ref('');
-const errorMessage = ref('');
-const ticketId = ref('');
+// [UPDATE] Kita tidak perlu lagi ref successMessage dan errorMessage
+// const successMessage = ref('');
+// const errorMessage = ref(''); 
+const ticketId = ref(''); // (Kita simpan jika nanti perlu)
 
 // eslint-disable-next-line no-unused-vars
 function handleFileUpload(event) {
   const file = event.target.files[0];
   if (file && file.size > 5 * 1024 * 1024) { // 5MB limit
-    alert("Ukuran file terlalu besar! Maksimal 5MB.");
-    event.target.value = null; // Reset input file
+    Swal.fire({ // <-- Ganti alert() biasa dengan Swal
+      icon: 'error',
+      title: 'Ukuran File Terlalu Besar',
+      text: 'Ukuran file maksimal adalah 5MB.',
+    });
+    event.target.value = null;
     return;
   }
   form.value.attachment = file;
 }
 
-/**
- * [UPDATE 3] Fungsi untuk memicu confetti
- * Mengambil canvas dari template dan menembakkan confetti.
- */
-// eslint-disable-next-line no-unused-vars
-function triggerConfetti() {
-  const canvas = document.getElementById('confetti-canvas');
-  if (canvas) {
-    const myConfetti = confetti.create(canvas, {
-      resize: true,
-      useWorker: true
-    });
-    myConfetti({
-      particleCount: 150, // Jumlah partikel
-      spread: 100,         // Seberapa lebar sebarannya
-      origin: { y: 0.6 }  // Mulai dari tengah layar (agak ke atas)
-    });
-  }
-}
+// [UPDATE] Fungsi triggerConfetti() dihapus, kita akan panggil confetti() langsung
 
 // eslint-disable-next-line no-unused-vars
 async function submitAspiration() {
-  // [UPDATE 1] Bersihkan error lama dan lakukan validasi di frontend
   formErrors.value = {};
-  errorMessage.value = '';
-  successMessage.value = '';
 
-  // [UPDATE 1] Validasi Rating Wajib
   if (form.value.rating === 0) {
     formErrors.value.rating = 'Rating kepuasan wajib diisi.';
-    return; // Hentikan fungsi jika validasi gagal
+    // Tampilkan notifikasi error singkat
+    Swal.fire({
+      icon: 'warning',
+      title: 'Validasi Gagal',
+      text: 'Mohon berikan rating kepuasan sebelum mengirim.',
+      toast: true, // <-- Tampilkan sebagai notif kecil (toast)
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3000
+    });
+    return;
   }
 
-  // Jika validasi lolos, lanjutkan
   isLoading.value = true;
-
   const formData = new FormData();
+  // ... (append data form tetap sama) ...
   formData.append('subject', form.value.subject);
   formData.append('category', form.value.category);
   formData.append('message', form.value.message);
-
-  // [UPDATE 1] Rating sekarang wajib, jadi bisa langsung di-append
   formData.append('rating', form.value.rating);
-
   if (!isAnonim.value) {
     formData.append('name', form.value.name);
     formData.append('contact', form.value.contact);
   }
-
   if (form.value.attachment) {
     formData.append('attachment', form.value.attachment);
   }
@@ -723,30 +716,53 @@ async function submitAspiration() {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-    successMessage.value = response.data.message;
-    ticketId.value = response.data.ticket_id;
-
-    // [UPDATE 3] Panggil confetti di sini setelah sukses!
-    triggerConfetti();
-
-    // Refresh galeri publik agar data baru (jika statusnya 'Sudah Dibaca') bisa muncul
+    ticketId.value = response.data.ticket_id; // Simpan ticket ID
+    
+    // Refresh galeri di background
     fetchPublicAspirations(1);
 
-  } catch (error) {
-    if (error.response && error.response.status === 422) {
-      // Jika backend (Laravel) mengirim error validasi per-field
-      if (error.response.data.errors) {
-        // Ubah error backend menjadi format yang bisa dibaca `formErrors`
-        formErrors.value = Object.fromEntries(
-          Object.entries(error.response.data.errors).map(([key, value]) => [key, value[0]])
-        );
-        errorMessage.value = "Gagal mengirim: Periksa kembali isian Anda.";
-      } else {
-        errorMessage.value = "Gagal mengirim: Pastikan semua kolom yang wajib diisi sudah benar.";
+    Swal.fire({
+      icon: 'success', // <-- Ini akan memunculkan animasi ceklis ✅
+      title: 'Aspirasi Terkirim!',
+      text: 'Terima kasih telah menyampaikan aspirasi Anda. Kami akan segera meninjaunya.',
+      confirmButtonText: 'Selesai',
+      confirmButtonColor: '#1e293b', // <-- TAMBAHKAN BARIS INI
+      allowOutsideClick: false, 
+      didOpen: () => {
+        // Tembakkan confetti!
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.6 }
+        });
       }
-    } else {
-      errorMessage.value = "Terjadi kesalahan di server. Silakan coba lagi nanti.";
+    }).then((result) => {
+      // Reset form HANYA setelah pengguna mengklik "Selesai"
+      if (result.isConfirmed) {
+        resetForm();
+      }
+    });
+
+  } catch (error) {
+    // [UPDATE] Tampilkan notifikasi ERROR dengan SweetAlert
+    let errorText = "Terjadi kesalahan di server. Silakan coba lagi nanti.";
+    if (error.response && error.response.status === 422) {
+      if (error.response.data.errors) {
+        // Ambil error validasi pertama (jika ada)
+        const firstErrorKey = Object.keys(error.response.data.errors)[0];
+        errorText = error.response.data.errors[firstErrorKey][0];
+      } else {
+        errorText = "Gagal mengirim: Pastikan semua kolom yang wajib diisi sudah benar.";
+      }
     }
+    
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops... Gagal Terkirim',
+      text: errorText,
+      confirmButtonColor: '#1e293b', // <-- TAMBAHKAN BARIS INI
+    }); 
+    
     console.error("Gagal mengirim aspirasi:", error);
   } finally {
     isLoading.value = false;
@@ -758,63 +774,51 @@ function resetForm() {
   isAnonim.value = false;
   form.value = {
     subject: '', category: '', message: '',
-    rating: 0, // <-- Reset rating
+    rating: 0,
     name: '', contact: '', attachment: null,
   };
-  hoverRating.value = 0; // <-- Reset hover
-  successMessage.value = '';
-  errorMessage.value = '';
-  formErrors.value = {}; // <-- [UPDATE 1] Bersihkan error validasi juga
+  hoverRating.value = 0;
+  formErrors.value = {};
   ticketId.value = '';
   const inputFile = document.getElementById('attachment');
   if (inputFile) inputFile.value = '';
+  
+  // [UPDATE] Tidak perlu reset success/error message
+  // successMessage.value = '';
+  // errorMessage.value = '';
 }
 // --- BATAS LOGIKA FORMULIR ---
 
 
-// --- LOGIKA BARU UNTUK GALERI ASPIRASI PUBLIK ---
-const publicAspirations = ref({ data: [], total: 0 }); // Inisialisasi sebagai objek dengan data dan total
+// --- LOGIKA GALERI ASPIRASI PUBLIK (Tetap Sama) ---
+const publicAspirations = ref({ data: [], total: 0 });
 const publicAspirationsLoading = ref(true);
 const publicAspirationSearch = ref('');
 const publicAspirationCategory = ref('');
 
-/**
- * Mengambil data aspirasi publik dari API
- * @param {number} page - Nomor halaman yang ingin diambil
- */
 // eslint-disable-next-line no-unused-vars
 async function fetchPublicAspirations(page = 1) {
   publicAspirationsLoading.value = true;
   try {
-    // Siapkan parameter (termasuk .value untuk Vue 3 <script setup>)
     const params = {
       page: page,
       search: publicAspirationSearch.value,
       category: publicAspirationCategory.value,
     };
-
     const response = await axios.get('/api/aspirations/public', { params });
     publicAspirations.value = response.data;
   } catch (error) {
     console.error("Gagal mengambil aspirasi publik:", error);
-    // Tampilkan pesan error di galeri jika perlu
   } finally {
     publicAspirationsLoading.value = false;
   }
 }
 
-/**
- * Menerapkan filter dan search, lalu kembali ke halaman 1
- */
 // eslint-disable-next-line no-unused-vars
 function applyPublicAspirationFilters() {
-  // Selalu reset ke halaman 1 saat filter atau search
   fetchPublicAspirations(1);
 }
 
-/**
- * Helper untuk warna status
- */
 // eslint-disable-next-line no-unused-vars
 function statusColor(status) {
   switch (status) {
@@ -826,9 +830,6 @@ function statusColor(status) {
   }
 }
 
-/**
- * Helper untuk format waktu (cth: "3 hari yang lalu")
- */
 // eslint-disable-next-line no-unused-vars
 function formatRelativeTime(dateString) {
   const date = new Date(dateString);
@@ -846,17 +847,13 @@ function formatRelativeTime(dateString) {
 // --- BATAS LOGIKA GALERI ---
 
 
+// --- onMounted dan onUnmounted (Tetap Sama) ---
 onMounted(() => {
-  // Ambil semua data yang sudah ada
   pageContentStore.fetchContentBySlug('index');
   contentBlockStore.fetchBlocksByPage('index');
   workProgramStore.fetchWorkPrograms();
   articleStore.fetchLatestArticles();
-
-  // Ambil data baru untuk galeri aspirasi
   fetchPublicAspirations(1);
-
-  // Mulai interval logo
   intervalId = setInterval(() => {
     activeLogoIndex.value = (activeLogoIndex.value + 1) % logos.value.length;
   }, 3000);
@@ -868,7 +865,7 @@ onUnmounted(() => {
   }
 });
 
-// (Computed featuredPrograms yang sudah ada)
+// --- Computed (Tetap Sama) ---
 // eslint-disable-next-line no-unused-vars
 const featuredPrograms = computed(() => {
   const allPrograms = workProgramStore.workPrograms;

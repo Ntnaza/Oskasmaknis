@@ -25,23 +25,28 @@ class AspirationController extends Controller
      */
     public function store(Request $request)
     {
-        // ... (Method store Anda yang sudah ada)
+        // [UPDATE 1] Tambahkan 'rating' ke validasi
         $validatedData = $request->validate([
             'subject' => 'required|string|max:255',
             'category' => 'required|string|max:100',
-            'message' => 'required|string',
+            'message' => 'required|string|max:500',
             'name' => 'nullable|string|max:255',
             'contact' => 'nullable|string|max:255',
             'attachment' => 'nullable|file|mimes:jpg,png,pdf,doc,docx|max:5120',
+            'rating' => 'required|integer|min:1|max:5', // <-- DIPERBARUI
         ]);
+
         $filePath = null;
         if ($request->hasFile('attachment')) {
             $filePath = $request->file('attachment')->store('aspirations_attachments', 'public');
         }
+
         $ticketId = 'ASP-' . now()->year . '-' . strtoupper(Str::random(4));
         while (Aspiration::where('ticket_id', $ticketId)->exists()) {
             $ticketId = 'ASP-' . now()->year . '-' . strtoupper(Str::random(4));
         }
+
+        // [UPDATE 2] Tambahkan 'rating' saat menyimpan data
         $aspiration = Aspiration::create([
             'ticket_id' => $ticketId,
             'subject' => $validatedData['subject'],
@@ -51,7 +56,9 @@ class AspirationController extends Controller
             'contact' => $validatedData['contact'] ?? null,
             'file_path' => $filePath,
             'status' => 'Baru',
+            'rating' => $validatedData['rating'], // <-- DIPERBARUI
         ]);
+
         return response()->json([
             'message' => 'Aspirasi Anda telah berhasil dikirim!',
             'ticket_id' => $aspiration->ticket_id,
@@ -130,17 +137,14 @@ class AspirationController extends Controller
         $query = Aspiration::query();
 
         // Filter 1: HANYA tampilkan yang statusnya BUKAN 'Baru'
-        // (Sesuai alur kita: "Sudah Dibaca" atau lebih tinggi akan tampil)
         $query->where('status', '!=', 'Baru');
 
-        // Filter 2: Filter berdasarkan Kategori (PERBAIKAN DI SINI)
-        // Kita gunakan 'filled' agar 'category=""' (Semua Kategori) diabaikan
+        // Filter 2: Filter berdasarkan Kategori
         if ($request->filled('category')) {
             $query->where('category', $request->input('category'));
         }
 
-        // Filter 3: Filter Search Bar (PERBAIKAN DI SINI)
-        // Kita gunakan 'filled' agar search kosong diabaikan
+        // Filter 3: Filter Search Bar
         if ($request->filled('search')) {
             $searchTerm = $request->input('search');
             $query->where(function($q) use ($searchTerm) {
@@ -149,9 +153,12 @@ class AspirationController extends Controller
             });
         }
 
-        // Ambil data dengan urutan terbaru, 6 per halaman (pagination)
-        $aspirations = $query->orderBy('created_at', 'desc')
-                             ->paginate(6); // 6 per halaman
+        // [UPDATE 3] Gunakan select() untuk keamanan dan performa
+        $aspirations = $query->select(
+                                'id', 'subject', 'category', 'message', 'status', 'created_at', 'rating'
+                            )
+                            ->orderBy('created_at', 'desc')
+                            ->paginate(6); // 6 per halaman
 
         return response()->json($aspirations);
     }

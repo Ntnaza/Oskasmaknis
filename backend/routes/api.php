@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\AspirationController;
 
 // Controller API kita
 use App\Http\Controllers\Api\EventController; 
+use App\Http\Controllers\Api\CalendarActivityController; // <-- 1. TAMBAHKAN IMPORT INI
 
 /*
 |--------------------------------------------------------------------------
@@ -38,12 +39,8 @@ Route::get('/content-block/{key}', [ContentBlockController::class, 'show']);
 Route::post('/content-block/{key}', [ContentBlockController::class, 'update']);
 
 // Rute Team Member (dengan urutan benar)
-
-// --- TAMBAHAN BARU UNTUK SERVE FOTO ---
 Route::get('team-members/{teamMember}/photo', [TeamMemberController::class, 'servePhoto'])
      ->name('team-members.photo');
-// ------------------------------------
-
 Route::get('team-members/{teamMember}/qrcode', [TeamMemberController::class, 'generateQrCode'])
      ->name('team-members.qrcode');
 Route::apiResource('team-members', TeamMemberController::class);
@@ -66,12 +63,8 @@ Route::get('admin/events/{event}/qrcode', [EventController::class, 'generateQrCo
 Route::post('/admin/events/{event}/attend', [EventController::class, 'scanMemberAttendance']);
 Route::post('/settings/background', [SettingController::class, 'updateBackground']);
 Route::get('/settings/background', [SettingController::class, 'getBackground']);
-
-// --- INI ADALAH BARIS YANG DIPERBAIKI (Route::post) ---
 Route::post('admin/events/{event}/scan-member', [EventController::class, 'scanMemberAttendance'])
      ->name('admin.events.scan-member');
-// --------------------------------------------------
-
 Route::apiResource('admin/events', EventController::class);
 
 
@@ -82,10 +75,7 @@ Route::apiResource('admin/events', EventController::class);
 // Rute Publik (Untuk siswa mengirim aspirasi)
 Route::post('/aspirations', [AspirationController::class, 'store']);
 Route::get('/aspirations/track/{ticket_id}', [AspirationController::class, 'track']);
-
-// --- 1. RUTE BARU UNTUK GALERI PUBLIK ---
 Route::get('/aspirations/public', [AspirationController::class, 'getPublicAspirations']);
-// ----------------------------------------
 
 // Rute Admin (Untuk mengelola aspirasi di dasbor)
 Route::prefix('admin')->group(function () {
@@ -94,6 +84,19 @@ Route::prefix('admin')->group(function () {
     Route::put('/aspirations/{aspiration}', [AspirationController::class, 'update']);
     Route::delete('/aspirations/{aspiration}', [AspirationController::class, 'destroy']);
 });
+
+
+// ======================================================
+// ==       RUTE BARU UNTUK KALENDER KEGIATAN          ==
+// ======================================================
+
+Route::get('/calendar-activities', [CalendarActivityController::class, 'indexPublic']);
+
+// Rute Admin (CRUD untuk mengelola jadwal)
+Route::prefix('admin')->group(function () {
+    Route::apiResource('calendar-activities', CalendarActivityController::class);
+});
+
 // ======================================================
 // ==              AKHIR RUTE BARU                     ==
 // ======================================================

@@ -7,6 +7,8 @@ import axios from "axios"; // <-- IMPORT AXIOS
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "@/assets/styles/tailwind.css";
 
+// --- CSS FULLCALENDAR YANG RUSAK SUDAH DIHAPUS DARI SINI ---
+
 // mouting point for the whole app
 import App from "@/App.vue";
 
@@ -45,8 +47,9 @@ import EventDetail from "@/views/admin/EventDetail.vue";
 import MemberCardGenerator from "@/views/admin/MemberCardGenerator.vue";
 import CardPrintPage from "@/views/admin/CardPrintPage.vue";
 
-// --- 1. IMPORT BARU UNTUK ADMIN ASPIRASI ---
 import ManageAspirations from "@/views/admin/ManageAspirations.vue";
+
+import ManageCalendar from "@/views/admin/ManageCalendar.vue";
 
 // views for Auth layout
 import Login from "@/views/auth/Login.vue";
@@ -60,11 +63,11 @@ import WorkPrograms from "@/views/WorkPrograms.vue";
 import AnggotaDetail from "@/views/AnggotaDetail.vue";
 import ArticlesIndex from "@/views/ArticlesIndex.vue";
 import BeritaDetail from "@/views/BeritaDetail.vue";
-// (ScanAttendance.vue sudah dihapus, bagus)
 
-// --- IMPORT BARU UNTUK ASPIRASI ---
 import SubmitAspiration from "@/views/SubmitAspiration.vue";
 import TrackAspiration from "@/views/TrackAspiration.vue";
+
+import PublicCalendar from "@/views/PublicCalendar.vue"; 
 // ----------------------------------
 
 // --- KONFIGURASI BASE URL GLOBAL AXIOS ---
@@ -88,6 +91,7 @@ const routes = [
         component: Dashboard,
         name: "admin-dashboard",
       },
+      // ... (rute admin lainnya)
       {
         path: "/admin/settings",
         component: Settings,
@@ -158,13 +162,16 @@ const routes = [
         component: MemberCardGenerator,
         name: "admin-kartu-anggota",
       },
-      // --- 2. RUTE BARU DITAMBAHKAN DI SINI ---
       {
         path: "/admin/manage-aspirations",
         component: ManageAspirations,
         name: "admin-manage-aspirations",
       },
-      // -------------------------------------
+      {
+        path: "/admin/manage-calendar",
+        component: ManageCalendar,
+        name: "admin-manage-calendar",
+      },
     ],
   },
   {
@@ -201,7 +208,14 @@ const routes = [
     name: "track-aspirasi-detail", 
     props: true 
   },
-  // ---------------------------------
+  
+  // --- RUTE PUBLIK KALENDER ---
+  {
+    path: "/kalender-kegiatan",
+    component: PublicCalendar,
+    name: "public-calendar",
+  },
+  // ---------------------------------------
 
   { path: "/:pathMatch(.*)*", redirect: "/" },
 ];
