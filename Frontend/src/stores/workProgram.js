@@ -1,5 +1,9 @@
 import { defineStore } from 'pinia';
 import api from '@/services/api';
+import axios from 'axios';
+import { useAngkatanStore } from './angkatan';
+
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000';
 
 export const useWorkProgramStore = defineStore('workProgram', {
   state: () => ({
@@ -7,16 +11,19 @@ export const useWorkProgramStore = defineStore('workProgram', {
     workProgramsForSelection: [], // Untuk menyimpan daftar ID dan Judul
   }),
   actions: {
-    // FUNGSI UNTUK HALAMAN PUBLIK (Index.vue)
     async fetchWorkPrograms() {
-      try {
-        const response = await api.get('/work-programs');
-        
-        // PERBAIKAN INI SUDAH BENAR: API-nya kirim [ ... ]
-        this.workPrograms = response.data;
+      const angkatanStore = useAngkatanStore(); // <-- 2. Gunakan Store
 
+      try {
+        // <-- 3. Kirim parameter angkatan_id
+        const response = await axios.get(`${API_BASE_URL}/api/work-programs`, {
+            params: {
+                angkatan_id: angkatanStore.selectedId
+            }
+        });
+        this.workPrograms = response.data;
       } catch (error) {
-        console.error('Error fetching work programs:', error);
+        console.error("Gagal memuat proker:", error);
       }
     },
     

@@ -58,6 +58,19 @@
           </li>
           
           <li class="flex items-center">
+            <router-link to="/kalender-kegiatan" v-slot="{ isActive }">
+              <a
+                class="lg:text-white text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold relative group"
+                :class="[!isActive && 'lg:hover:text-blueGray-200']"
+              >
+                Kalender Kegiatan
+                <span
+                  class="absolute bottom-0 left-0 right-0 mx-auto h-0.5 lg:bg-white bg-blueGray-700 transition-all duration-300" :class="[isActive ? 'w-9/12' : 'w-0 group-hover:w-9/12']"
+                ></span>
+              </a>
+            </router-link>
+          </li>
+          <li class="flex items-center">
             <router-link to="/landing" v-slot="{ isActive }">
               <a
                 class="lg:text-white text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold relative group"
@@ -79,7 +92,7 @@
               >
                 Pengaturan
                 <span
-                  class="absolute bottom-0 left-0 right-0 mx-auto h-0.5 lg:bg-white bg-blueGray-700 transition-all duration-300" :class="[isActive ? 'w-9/12' : 'w-0 group-hover:w-9/12']"
+                  class="absolute bottom-0 left-0 right-0 mx-auto h-0.5 lg:bg-white bg-blueGray-700 transition-all duration-300" :class="[isActive ? 'w-9/1R2' : 'w-0 group-hover:w-9/12']"
                 ></span>
               </a>
             </router-link>

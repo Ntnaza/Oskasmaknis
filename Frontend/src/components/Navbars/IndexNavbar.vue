@@ -29,8 +29,22 @@
         :class="[navbarOpen ? 'block' : 'hidden']"
         id="example-navbar-warning"
       >
-        <ul class="flex flex-col lg:flex-row list-none lg:ml-auto">
+        <ul class="flex flex-col lg:flex-row list-none lg:ml-auto items-center">
           
+          <li class="flex items-center mr-4">
+            <div class="relative" v-if="angkatanStore.list.length > 0">
+              <select 
+                :value="angkatanStore.selectedId"
+                @change="e => angkatanStore.changeAngkatan(e.target.value)"
+                class="border-blueGray-300 bg-white text-blueGray-700 text-xs font-bold uppercase px-3 py-2 rounded shadow focus:outline-none focus:ring ease-linear transition-all duration-150 cursor-pointer"
+                style="min-width: 150px;"
+              >
+                <option v-for="angkatan in angkatanStore.list" :key="angkatan.id" :value="angkatan.id">
+                  {{ angkatan.year_period }} - {{ angkatan.name }}
+                </option>
+              </select>
+            </div>
+          </li>
           <li class="flex items-center">
             <router-link
               to="/program-kerja"
@@ -46,6 +60,15 @@
               class="hover:text-emerald-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold"
             >
               Berita & Galeri
+            </router-link>
+          </li>
+          
+          <li class="flex items-center">
+            <router-link
+              to="/kalender-kegiatan"
+              class="hover:text-emerald-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold"
+            >
+              Kalender
             </router-link>
           </li>
           
@@ -68,47 +91,16 @@
           </li>
 
           <li class="flex items-center">
-            <a
-              class="hover:text-blueGray-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold"
-              href="httpsa://facebook.com/usernamekamu" target="_blank"
-              title="Facebook"
-            >
-              <i class="text-blueGray-400 fab fa-facebook text-lg leading-lg" />
-              <span class="lg:hidden inline-block ml-2">Facebook</span>
-            </a>
+            <a class="hover:text-blueGray-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold" href="https://facebook.com/usernamekamu" target="_blank"><i class="text-blueGray-400 fab fa-facebook text-lg leading-lg" /><span class="lg:hidden inline-block ml-2">Facebook</span></a>
           </li>
-
           <li class="flex items-center">
-            <a
-              class="hover:text-blueGray-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold"
-              href="https://twitter.com/usernamekamu" target="_blank"
-              title="Twitter"
-            >
-              <i class="text-blueGray-400 fab fa-twitter text-lg leading-lg" />
-              <span class="lg:hidden inline-block ml-2">Twitter</span>
-            </a>
+            <a class="hover:text-blueGray-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold" href="https://twitter.com/usernamekamu" target="_blank"><i class="text-blueGray-400 fab fa-twitter text-lg leading-lg" /><span class="lg:hidden inline-block ml-2">Twitter</span></a>
           </li>
-
           <li class="flex items-center">
-            <a
-              class="hover:text-blueGray-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold"
-              href="https://instagram.com/usernamekamu" target="_blank"
-              title="Instagram"
-            >
-              <i class="text-blueGray-400 fab fa-instagram text-lg leading-lg" />
-              <span class="lg:hidden inline-block ml-2">Instagram</span>
-            </a>
+            <a class="hover:text-blueGray-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold" href="https://instagram.com/usernamekamu" target="_blank"><i class="text-blueGray-400 fab fa-instagram text-lg leading-lg" /><span class="lg:hidden inline-block ml-2">Instagram</span></a>
           </li>
-
           <li class="flex items-center">
-            <a
-              class="hover:text-blueGray-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold"
-              href="https://tiktok.com/@usernamekamu" target="_blank"
-              title="TikTok"
-            >
-              <i class="text-blueGray-400 fab fa-tiktok text-lg leading-lg" />
-              <span class="lg:hidden inline-block ml-2">TikTok</span>
-            </a>
+            <a class="hover:text-blueGray-500 text-blueGray-700 px-3 py-2 flex items-center text-xs uppercase font-bold" href="https://tiktok.com/@usernamekamu" target="_blank"><i class="text-blueGray-400 fab fa-tiktok text-lg leading-lg" /><span class="lg:hidden inline-block ml-2">TikTok</span></a>
           </li>
 
         </ul>
@@ -118,7 +110,23 @@
 </template>
 
 <script>
+// Import Store
+import { useAngkatanStore } from "@/stores/angkatan";
+import { onMounted } from "vue";
+
 export default {
+  setup() {
+    const angkatanStore = useAngkatanStore();
+
+    onMounted(() => {
+      // Ambil data angkatan saat navbar dimuat
+      angkatanStore.fetchAngkatans();
+    });
+
+    return {
+      angkatanStore,
+    };
+  },
   data() {
     return {
       navbarOpen: false,

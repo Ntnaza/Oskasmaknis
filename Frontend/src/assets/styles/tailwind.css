@@ -6,7 +6,17 @@
 Document
 ========
 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
+/* --- TAMBAHAN VARIABEL GLOBAL --- */
+:root {
+  /* Warna default (Emerald-500) */
+  --theme-color: #10B981; 
+  /* Warna default hover (Emerald-600) */
+  --theme-color-dark: #059669; 
+}
 /**
 Use a better box model (opinionated).
 */

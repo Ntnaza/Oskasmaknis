@@ -13,6 +13,7 @@ use App\Http\Controllers\WorkProgramController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Api\AspirationController;
+use App\Http\Controllers\Api\AngkatanController;
 
 // Controller API kita
 use App\Http\Controllers\Api\EventController; 
@@ -97,6 +98,7 @@ Route::prefix('admin')->group(function () {
     Route::apiResource('calendar-activities', CalendarActivityController::class);
 });
 
+Route::apiResource('angkatans', AngkatanController::class);
 // ======================================================
 // ==              AKHIR RUTE BARU                     ==
 // ======================================================

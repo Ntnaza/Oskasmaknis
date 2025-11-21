@@ -1,5 +1,7 @@
 <template>
   <div>
+    <auth-navbar />
+    
     <main>
       <section class="relative py-32 bg-blueGray-800">
         <div class="container mx-auto px-4">
@@ -68,6 +70,7 @@
       </div>
     </div>
 
+    <footer-component />
   </div>
 </template>
 
@@ -78,9 +81,16 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 
+// --- PERBAIKAN IMPORT ---
+import AuthNavbar from "@/components/Navbars/AuthNavbar.vue"; // Menggunakan AuthNavbar
+import FooterComponent from "@/components/Footers/Footer.vue";
+// --- BATAS PERBAIKAN ---
+
 export default {
   components: {
-    FullCalendar
+    FullCalendar,
+    AuthNavbar, // <-- Komponen didaftarkan
+    FooterComponent, // <-- Komponen didaftarkan
   },
   data() {
     return {
@@ -89,8 +99,6 @@ export default {
       calendarOptions: {
         plugins: [dayGridPlugin, interactionPlugin, listPlugin],
         
-        // Cek lebar layar: jika < 768px (HP/Tablet), pakai 'listMonth', 
-        // jika tidak, pakai 'dayGridMonth'
         initialView: window.innerWidth < 768 ? 'listMonth' : 'dayGridMonth',
         
         locale: 'id',
@@ -107,9 +115,8 @@ export default {
         editable: false,
         selectable: false,
         weekends: true,
-        expandRows: true, // Biarkan ini
+        expandRows: true, 
 
-        // Biarkan konten (CSS) yang menentukan tinggi kalender
         height: 'auto', 
         
         events: this.fetchCalendarEvents,
@@ -260,10 +267,8 @@ export default {
 
 /* --- STYLE UNTUK MULTI-LINE & TINGGI --- */
 
-/* Ini adalah "pembungkus" konten di dalam setiap kotak hari */
-/* Kita paksa tingginya minimal 110px */
 .fc-daygrid-day-frame {
-  min-height: 110px !important; /* Anda bisa sesuaikan angka 110px ini */
+  min-height: 110px !important; 
 }
 
 .fc-daygrid-event-harness {
@@ -286,20 +291,17 @@ export default {
   height: 100%;
 }
 
-/* 4. Style untuk JUDUL (baris pertama) tebal */
 .fc-event-multi-line strong {
   font-size: 0.9em;
   font-weight: 700;
   display: block;
 }
 
-/* 5. Style untuk WAKTU (baris kedua) */
 .fc-event-multi-line span {
   font-size: 0.9em;
   display: block;
 }
 
-/* 6. Style untuk Deskripsi (baris ketiga) */
 .fc-event-multi-line .desc {
   font-size: 0.8em;
   font-style: italic;

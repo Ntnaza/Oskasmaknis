@@ -16,41 +16,58 @@
             Copyright © {{ date }} OSIS & MPK SMK NURUL ISLAM CIANJUR.
           </div>
         </div>
-        <div class="w-full md:w-6/12 px-4"> <ul class="flex flex-wrap list-none md:justify-end justify-center">
+        <div class="w-full md:w-6/12 px-4">
+          <ul class="flex flex-wrap list-none md:justify-end justify-center">
             <li>
-              <a
-                href="/program-kerja"
+              <router-link
+                to="/program-kerja"
                 class="text-white hover:text-blueGray-300 text-sm font-semibold block py-1 px-3"
               >
                 Program Kerja
-              </a>
+              </router-link>
             </li>
             <li>
-              <a
-                href="/berita-dan-galeri"
+              <router-link
+                to="/berita-dan-galeri"
                 class="text-white hover:text-blueGray-300 text-sm font-semibold block py-1 px-3"
               >
                 Berita & Galeri
-              </a>
+              </router-link>
             </li>
             <li>
-              <a
-                href="/landing"
+              <router-link
+                to="/kalender-kegiatan"
+                class="text-white hover:text-blueGray-300 text-sm font-semibold block py-1 px-3"
+              >
+                Kalender
+              </router-link>
+            </li>
+            <li>
+              <router-link
+                to="/aspirasi/lacak"
+                class="text-white hover:text-blueGray-300 text-sm font-semibold block py-1 px-3"
+              >
+                Lacak Aspirasi
+              </router-link>
+            </li>
+            <li>
+              <router-link
+                to="/landing"
                 class="text-white hover:text-blueGray-300 text-sm font-semibold block py-1 px-3"
               >
                 Landing Page
-              </a>
+              </router-link>
             </li>
             <li>
-              <a
-                href="/auth/login"
+              <router-link
+                to="/auth/login"
                 class="text-white hover:text-blueGray-300 text-sm font-semibold block py-1 px-3"
               >
                 Pengaturan
-              </a>
+              </router-link>
             </li>
           </ul>
-        </div>
+          </div>
       </div>
     </div>
   </footer>

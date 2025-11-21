@@ -69,41 +69,58 @@
               >
                 Navigasi
               </span>
+              
               <ul class="list-unstyled">
                 <li>
-                  <a
+                  <router-link
+                    to="/program-kerja"
                     class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="/program-kerja"
                   >
                     Program Kerja
-                  </a>
+                  </router-link>
                 </li>
                 <li>
-                  <a
+                  <router-link
+                    to="/berita-dan-galeri"
                     class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="/berita-dan-galeri"
                   >
                     Berita & Galeri
-                  </a>
+                  </router-link>
                 </li>
                 <li>
-                  <a
+                  <router-link
+                    to="/kalender-kegiatan"
                     class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="/landing"
+                  >
+                    Kalender Kegiatan
+                  </router-link>
+                </li>
+                <li>
+                  <router-link
+                    to="/aspirasi/lacak"
+                    class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
+                  >
+                    Lacak Aspirasi
+                  </router-link>
+                </li>
+                <li>
+                  <router-link
+                    to="/landing"
+                    class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
                   >
                     Landing Page
-                  </a>
+                  </router-link>
                 </li>
                 <li>
-                  <a
+                  <router-link
+                    to="/auth/login"
                     class="text-blueGray-600 hover:text-blueGray-800 font-semibold block pb-2 text-sm"
-                    href="/auth/login"
                   >
                     Pengaturan
-                  </a>
+                  </router-link>
                 </li>
               </ul>
-            </div>
+              </div>
           </div>
         </div>
       </div>

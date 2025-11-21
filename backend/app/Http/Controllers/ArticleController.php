@@ -9,20 +9,31 @@ use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
-    public function fetchAll()
+    public function fetchAll(Request $request)
     {
-        return Article::orderBy('published_at', 'desc')->get();
+        $query = Article::latest();
+
+        // --- LOGIKA FILTER ANGKATAN ---
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        }
+        // ------------------------------
+
+        return response()->json($query->get());
     }
 
-    /**
-     * Mengambil 3 artikel terbaru untuk pratinjau di homepage.
-     */
-    public function fetchLatest()
+    // Contoh untuk fetchLatest (yang dipakai di Landing Page)
+    public function fetchLatest(Request $request)
     {
-        // PERBAIKAN: Menggunakan model 'Article' yang sudah di-import di atas
-        $latestArticles = Article::latest()->take(3)->get();
+        $query = Article::latest()->limit(3);
 
-        return response()->json(['data' => $latestArticles]);
+        // --- LOGIKA FILTER ANGKATAN ---
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        }
+        // ------------------------------
+        
+        return response()->json($query->get());
     }
 
     /**

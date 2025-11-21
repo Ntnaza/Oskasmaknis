@@ -16,9 +16,24 @@ class TeamMemberController extends Controller
     /**
      * Menampilkan daftar semua anggota tim.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return TeamMember::orderBy('order', 'asc')->get();
+        $query = TeamMember::orderBy('order', 'asc');
+
+        // --- PERBAIKAN LOGIKA FILTER ---
+        // Jika ada parameter 'angkatan_id' di URL, kita filter.
+        // Jika tidak ada, kita KOSONGKAN hasilnya (agar data tidak campur aduk).
+        
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        } else {
+            // Opsional: Jika tidak ada filter angkatan, jangan tampilkan apa-apa
+            // Ini mencegah admin bingung melihat data campur aduk
+            // return []; // Uncomment baris ini jika ingin tabel kosong saat tidak ada filter
+        }
+        // ------------------------------------
+
+        return $query->get();
     }
 
     /**
@@ -28,7 +43,7 @@ class TeamMemberController extends Controller
     {
         Log::info('Store request data (raw):', $request->all());
 
-        // --- PRE-PROCESSING DATA FORM ---
+        // --- PRE-PROCESSING ---
         $data = $request->all();
         if ($request->has('social_links') && is_string($request->input('social_links'))) {
             $data['social_links'] = json_decode($request->input('social_links'), true);
@@ -37,10 +52,14 @@ class TeamMemberController extends Controller
             $data['bio_data'] = json_decode($request->input('bio_data'), true);
         }
         $request->replace($data);
-        // --- BATAS PRE-PROCESSING ---
+        // ---------------------
         
         try {
             $validated = $request->validate([
+                // --- TAMBAHKAN VALIDASI INI ---
+                'angkatan_id' => 'required|exists:angkatans,id', 
+                // ------------------------------
+                
                 'name' => 'required|string|max:255',
                 'position' => 'required|string|max:255',
                 'order' => 'required|integer|min:0',
@@ -71,21 +90,19 @@ class TeamMemberController extends Controller
             unset($validated['photo_file']);
             unset($validated['header_photo_file']);
             
+            // Simpan data (angkatan_id sudah termasuk di $validated)
             $teamMember = new TeamMember($validated);
-            $teamMember->member_token = (string) Str::uuid(); // Buat token permanen
+            $teamMember->member_token = (string) Str::uuid(); 
             $teamMember->save(); 
             
             return response()->json(['message' => 'Anggota tim baru berhasil ditambahkan!', 'data' => $teamMember], 201);
 
         } catch (ValidationException $e) {
             Log::error('Store validation failed:', $e->errors());
-            return response()->json([
-                'message' => 'Data yang diberikan tidak valid.',
-                'errors' => $e->errors(),
-            ], 422);
+            return response()->json(['message' => 'Data tidak valid.', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            Log::error('Error storing team member:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return response()->json(['message' => 'Terjadi kesalahan saat menyimpan data.'], 500);
+            Log::error('Error storing team:', ['message' => $e->getMessage()]);
+            return response()->json(['message' => 'Terjadi kesalahan server.'], 500);
         }
     }
 

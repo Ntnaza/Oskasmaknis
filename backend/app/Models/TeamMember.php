@@ -16,6 +16,7 @@ class TeamMember extends Model
 
     // Ini semua dari kode Anda, sudah benar
     protected $fillable = [
+        'angkatan_id',
         'name',
         'position',
         'photo_path',

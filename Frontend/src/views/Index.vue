@@ -272,7 +272,7 @@
           </span>
         </h2>
         <p class="text-lg leading-relaxed mt-4 mb-4 text-blueGray-500">
-          Lihat aspirasi yang telah kami terima dan sedang ditindaklanjuti.
+          Lihat aspirasi yang telah kami terima!.
         </p>
       </div>
     </div>

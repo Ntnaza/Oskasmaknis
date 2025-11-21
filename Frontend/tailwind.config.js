@@ -12,16 +12,16 @@ module.exports = {
       "./**/*.vue",
       "./*.vue",
     ],
-    
     options: {
-      // PERUBAHAN UTAMA ADA DI SINI
       safelist: [
-  // Pola ini mencakup SEMUA warna latar belakang dari palet Tailwind
-  /bg-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(100|200|300|400|500|600|700|800|900|950)/,
-
-  // Regex lama untuk teks bisa dibiarkan jika masih perlu
-  /text-(red|orange|amber|emerald|teal|lightBlue|indigo|purple|pink)-(500)/,
-],
+        // Pola ini mencakup SEMUA warna latar belakang dari palet Tailwind
+        /bg-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(100|200|300|400|500|600|700|800|900|950)/,
+        // Regex lama untuk teks
+        /text-(red|orange|amber|emerald|teal|lightBlue|indigo|purple|pink)-(500)/,
+        // Tambahkan safelist untuk class theme kita (jaga-jaga)
+        /bg-theme-(500|600)/,
+        /text-theme-(500|600)/,
+      ],
     },
   },
   theme: {
@@ -29,6 +29,14 @@ module.exports = {
       ...colors,
     },
     extend: {
+      // --- TAMBAHAN BARU: WARNA TEMA DINAMIS ---
+      colors: {
+        theme: {
+          500: 'var(--theme-color)',      // Warna Utama (Default: Emerald)
+          600: 'var(--theme-color-dark)', // Warna Hover (Default: Emerald Dark)
+        },
+      },
+      // -----------------------------------------
       minHeight: {
         "screen-75": "75vh",
       },

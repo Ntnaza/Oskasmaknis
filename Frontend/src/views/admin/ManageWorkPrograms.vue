@@ -6,6 +6,9 @@
           <h6 class="text-blueGray-700 text-xl font-bold">
             {{ isEditing ? 'Edit Program Kerja' : 'Tambah Program Kerja Baru' }}
           </h6>
+          <small v-if="angkatanStore.activeAngkatan" class="text-emerald-600 font-bold block mt-1">
+            Mengelola untuk: {{ angkatanStore.activeAngkatan.name }}
+          </small>
         </div>
         <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
           <form @submit.prevent="submitForm">
@@ -88,6 +91,9 @@
               </tr>
             </thead>
             <tbody>
+              <tr v-if="workPrograms.length === 0">
+                  <td colspan="4" class="text-center p-4 text-blueGray-500">Tidak ada program kerja di angkatan ini.</td>
+              </tr>
               <tr v-for="program in workPrograms" :key="program.id" class="hover:bg-blueGray-50">
                 <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 font-bold">{{ program.title }}</td>
                 <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
@@ -116,21 +122,104 @@
 
 <script>
 import axios from 'axios';
+import { useAngkatanStore } from '@/stores/angkatan'; // 1. Import Store
+
 const API_WORK_PROGRAMS_URL = 'http://localhost:8000/api/work-programs';
 const API_TEAM_MEMBERS_URL = 'http://localhost:8000/api/team-members';
 
 export default {
-  data() { return { workPrograms: [], teamMembers: [], form: { id: null, title: '', description: '', status: 'Direncanakan', start_date: '', end_date: '', team_member_id: null, }, isEditing: false, }; },
+  data() {
+    return {
+      angkatanStore: useAngkatanStore(), // 2. Gunakan Store
+      workPrograms: [],
+      teamMembers: [],
+      form: { id: null, title: '', description: '', status: 'Direncanakan', start_date: '', end_date: '', team_member_id: null, },
+      isEditing: false,
+    };
+  },
+  // 3. Watcher untuk Auto-Reload
+  watch: {
+    'angkatanStore.selectedId': {
+      handler(newVal) {
+        if (newVal) this.fetchAllData();
+      },
+      immediate: true
+    }
+  },
   methods: {
     formatDate(dateString) { if (!dateString) return 'N/A'; const options = { year: 'numeric', month: 'long', day: 'numeric' }; return new Date(dateString).toLocaleDateString('id-ID', options); },
     getStatusClass(status) { if (status === 'Selesai') return 'bg-emerald-200 text-emerald-800'; if (status === 'Berjalan') return 'bg-orange-200 text-orange-800'; return 'bg-blueGray-200 text-blueGray-800'; },
-    async fetchAllData() { try { const [programsRes, membersRes] = await Promise.all([ axios.get(API_WORK_PROGRAMS_URL), axios.get(API_TEAM_MEMBERS_URL) ]); this.workPrograms = programsRes.data; this.teamMembers = membersRes.data; } catch (error) { console.error("Gagal ambil data:", error); } },
-    async submitForm() { try { if (this.isEditing) { await axios.put(`${API_WORK_PROGRAMS_URL}/${this.form.id}`, this.form); alert('Proker diupdate!'); } else { await axios.post(API_WORK_PROGRAMS_URL, this.form); alert('Proker ditambah!'); } this.resetForm(); this.fetchAllData(); } catch (error) { console.error("Gagal simpan:", error.response?.data); alert('Gagal simpan.'); } },
-    editProgram(program) { this.isEditing = true; this.form = { ...program }; window.scrollTo(0, 0); },
-    async deleteProgram(id) { if (confirm('Yakin hapus?')) { try { await axios.delete(`${API_WORK_PROGRAMS_URL}/${id}`); alert('Proker dihapus.'); this.fetchAllData(); } catch (error) { console.error("Gagal hapus:", error); alert('Gagal hapus.'); } } },
-    resetForm() { this.isEditing = false; this.form = { id: null, title: '', description: '', status: 'Direncanakan', start_date: '', end_date: '', team_member_id: null, }; }
+    
+    async fetchAllData() {
+      if (!this.angkatanStore.selectedId) return; // Tunggu angkatan dipilih
+      
+      try {
+        // 4. Kirim params angkatan_id
+        const [programsRes, membersRes] = await Promise.all([
+          axios.get(API_WORK_PROGRAMS_URL, { params: { angkatan_id: this.angkatanStore.selectedId } }),
+          axios.get(API_TEAM_MEMBERS_URL, { params: { angkatan_id: this.angkatanStore.selectedId } })
+        ]);
+        this.workPrograms = programsRes.data;
+        this.teamMembers = membersRes.data;
+      } catch (error) {
+        console.error("Gagal ambil data:", error);
+      }
+    },
+
+    async submitForm() {
+      try {
+        // 5. Sisipkan angkatan_id ke data yang akan dikirim
+        const dataToSend = {
+            ...this.form,
+            angkatan_id: this.angkatanStore.selectedId
+        };
+
+        if (this.isEditing) {
+          await axios.put(`${API_WORK_PROGRAMS_URL}/${this.form.id}`, dataToSend);
+          alert('Proker diupdate!');
+        } else {
+          await axios.post(API_WORK_PROGRAMS_URL, dataToSend);
+          alert('Proker ditambah!');
+        }
+        this.resetForm();
+        this.fetchAllData();
+      } catch (error) {
+        console.error("Gagal simpan:", error.response?.data);
+        alert('Gagal simpan: ' + (error.response?.data?.message || 'Error'));
+      }
+    },
+
+    editProgram(program) {
+      this.isEditing = true;
+      // Hati-hati saat copy object, pastikan format tanggal sesuai input type="date" (YYYY-MM-DD)
+      // Jika format dari API ISO string, kita perlu potong
+      this.form = {
+          ...program,
+          start_date: program.start_date ? program.start_date.substring(0, 10) : '',
+          end_date: program.end_date ? program.end_date.substring(0, 10) : '',
+      };
+      window.scrollTo(0, 0);
+    },
+    
+    async deleteProgram(id) {
+      if (confirm('Yakin hapus?')) {
+        try {
+          await axios.delete(`${API_WORK_PROGRAMS_URL}/${id}`);
+          alert('Proker dihapus.');
+          this.fetchAllData();
+        } catch (error) {
+          console.error("Gagal hapus:", error);
+          alert('Gagal hapus.');
+        }
+      }
+    },
+    
+    resetForm() {
+      this.isEditing = false;
+      this.form = { id: null, title: '', description: '', status: 'Direncanakan', start_date: '', end_date: '', team_member_id: null, };
+    }
   },
-  mounted() { this.fetchAllData(); },
+  // mounted() dihapus karena sudah digantikan oleh watch immediate
 };
 </script>
 

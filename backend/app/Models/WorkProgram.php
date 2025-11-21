@@ -11,7 +11,8 @@ class WorkProgram extends Model
     use HasFactory;
 
     protected $fillable = [
-        'team_member_id', // <-- Tambahkan ini
+        'angkatan_id',
+        'team_member_id',
         'title',
         'description',
         'status',

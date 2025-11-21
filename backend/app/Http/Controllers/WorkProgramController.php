@@ -10,10 +10,17 @@ class WorkProgramController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil semua program kerja, urutkan dari yang terbaru
-        return WorkProgram::orderBy('created_at', 'desc')->get();
+        $query = WorkProgram::query(); 
+
+        // --- LOGIKA FILTER ANGKATAN ---
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        }
+        // ------------------------------
+
+        return response()->json($query->get());
     }
 
     /**
@@ -22,7 +29,11 @@ class WorkProgramController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'team_member_id' => 'required|exists:team_members,id', // <-- Aturan baru
+            // --- TAMBAHAN WAJIB: ID ANGKATAN ---
+            'angkatan_id' => 'required|exists:angkatans,id',
+            // -----------------------------------
+            
+            'team_member_id' => 'required|exists:team_members,id', 
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'status' => 'required|string',
@@ -48,7 +59,7 @@ class WorkProgramController extends Controller
     public function update(Request $request, WorkProgram $workProgram)
     {
         $validated = $request->validate([
-            'team_member_id' => 'required|exists:team_members,id', // <-- Aturan baru
+            'team_member_id' => 'required|exists:team_members,id', 
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'status' => 'required|string',
@@ -68,11 +79,20 @@ class WorkProgramController extends Controller
         $workProgram->delete();
         return response()->json(['message' => 'Program kerja berhasil dihapus']);
     }
+
     // TAMBAHKAN METHOD INI
-    public function getAllForSelection()
+    public function getAllForSelection(Request $request)
     {
-        $workPrograms = WorkProgram::select('id', 'title')->get();
+        $query = WorkProgram::select('id', 'title');
+
+        // Kita tambahkan filter angkatan di sini juga
+        // Agar saat memilih proker (misal untuk di-highlight di landing page),
+        // yang muncul hanya proker angkatan tersebut.
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        }
+
+        $workPrograms = $query->get();
         return response()->json(['data' => $workPrograms]);
     }
 }
-
