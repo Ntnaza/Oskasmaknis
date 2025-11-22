@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage; // <-- 1. PASTIKAN IMPORT INI ADA
+use Illuminate\Support\Facades\Storage; 
 
 class Article extends Model
 {
@@ -14,6 +14,7 @@ class Article extends Model
      * The attributes that are mass assignable.
      */
     protected $fillable = [
+        'angkatan_id', // <-- TAMBAHAN PENTING!
         'title',
         'slug',
         'excerpt',

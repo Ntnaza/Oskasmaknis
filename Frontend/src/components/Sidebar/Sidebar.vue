@@ -3,18 +3,7 @@
   <nav
     class="md:left-0 md:block md:fixed md:top-0 md:bottom-0 md:overflow-y-auto md:flex-row md:flex-nowrap md:overflow-hidden shadow-xl bg-white flex flex-wrap items-center justify-between relative md:w-64 z-10 py-4 px-6"
   >
-  <div class="mt-4 mb-4 px-4" v-if="angkatanStore.list.length > 0">
-    <label class="block text-blueGray-500 text-xs font-bold mb-2 uppercase">Pilih Angkatan</label>
-    <select 
-    :value="angkatanStore.selectedId"
-    @change="e => angkatanStore.changeAngkatan(e.target.value)"
-    class="border-0 px-3 py-2 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full cursor-pointer"
-    >
-    <option v-for="angkatan in angkatanStore.list" :key="angkatan.id" :value="angkatan.id">
-        {{ angkatan.year_period }}
-    </option>
-    </select>
-</div>
+  
     <div
       class="md:flex-col md:items-stretch md:min-h-full md:flex-nowrap px-0 flex flex-wrap items-center justify-between w-full mx-auto"
     >
@@ -74,7 +63,18 @@
             />
           </div>
         </form>
-
+<div class="mt-4 mb-4 px-4" v-if="angkatanStore.list.length > 0">
+    <label class="block text-blueGray-500 text-xs font-bold mb-2 uppercase">Pilih Angkatan</label>
+    <select 
+    :value="angkatanStore.selectedId"
+    @change="e => angkatanStore.changeAngkatan(e.target.value)"
+    class="border-0 px-3 py-2 text-blueGray-600 bg-white rounded text-sm shadow focus:outline-none focus:ring w-full cursor-pointer"
+    >
+    <option v-for="angkatan in angkatanStore.list" :key="angkatan.id" :value="angkatan.id">
+        {{ angkatan.year_period }}
+    </option>
+    </select>
+</div>
         <hr class="my-4 md:min-w-full" />
         <h6
           class="md:min-w-full text-blueGray-500 text-xs uppercase font-bold block pt-1 pb-4 no-underline"

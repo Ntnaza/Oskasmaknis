@@ -6,6 +6,9 @@
         <div class="relative flex flex-col min-w-0 break-words w-full shadow-lg rounded-lg bg-white p-6">
           <h6 class="text-blueGray-700 text-xl font-bold mb-4">
             Pengaturan Kartu
+            <span v-if="angkatanStore.activeAngkatan" class="text-emerald-600 text-sm ml-2">
+              ({{ angkatanStore.activeAngkatan.name }})
+            </span>
           </h6>
           <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end">
             
@@ -41,7 +44,7 @@
                 Cetak Kartu
               </button>
             </div>
-            </div>
+          </div>
         </div>
       </div>
 
@@ -92,11 +95,14 @@
 
 <script>
 import axios from 'axios';
+import { useAngkatanStore } from '@/stores/angkatan'; 
+
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000';
 
 export default {
   data() {
     return {
+      angkatanStore: useAngkatanStore(), 
       teamMembers: [],
       cardBackgroundFile: null,
       customBackgroundUrl: null, 
@@ -115,16 +121,41 @@ export default {
           backgroundPosition: 'center',
         };
       }
+      else if (this.angkatanStore.activeAngkatan && this.angkatanStore.activeAngkatan.card_background_url) {
+        return {
+            backgroundImage: `url(${API_BASE_URL}${this.angkatanStore.activeAngkatan.card_background_url})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+        };
+      }
       return {
         backgroundColor: this.defaultBackgroundColor,
       };
     },
   },
+  watch: {
+    'angkatanStore.selectedId': {
+      handler(newVal) {
+        if (newVal) {
+            this.fetchTeamMembers();
+            // Reset input file saat ganti angkatan
+            this.cardBackgroundFile = null;
+            this.customBackgroundUrl = null;
+        }
+      },
+      immediate: true 
+    }
+  },
   methods: {
-    // --- METHOD LAMA YANG HILANG (DIKEMBALIKAN) ---
     async fetchTeamMembers() {
+      if (!this.angkatanStore.selectedId) return; 
+
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/team-members`);
+        const response = await axios.get(`${API_BASE_URL}/api/team-members`, {
+            params: {
+                angkatan_id: this.angkatanStore.selectedId
+            }
+        });
         this.teamMembers = response.data.sort((a, b) => a.order - b.order);
       } catch (error) {
         console.error("Gagal mengambil daftar anggota:", error);
@@ -144,7 +175,6 @@ export default {
       event.target.src = 'https://placehold.co/150x200/E2E8F0/A0AEC0?text=Foto';
     },
 
-    // --- METHOD BARU (TETAP ADA) ---
     handleBackgroundUpload(event) {
       const file = event.target.files[0];
       if (file) {
@@ -152,22 +182,34 @@ export default {
         this.customBackgroundUrl = URL.createObjectURL(file); 
       } else {
         this.cardBackgroundFile = null;
+        this.customBackgroundUrl = null; // Kembali ke default/database
       }
     },
+    
     async saveBackground() {
-      if (!this.cardBackgroundFile) return;
+      if (!this.cardBackgroundFile || !this.angkatanStore.selectedId) return;
+      
       this.isUploading = true;
       const formData = new FormData();
-      formData.append('background', this.cardBackgroundFile);
+      formData.append('card_background_file', this.cardBackgroundFile);
+      formData.append('_method', 'PUT'); 
+
       try {
-        const response = await axios.post(
-          `${API_BASE_URL}/api/settings/background`, 
+        // --- PERBAIKAN DI SINI: Hapus 'const response =' ---
+        await axios.post(
+          `${API_BASE_URL}/api/angkatans/${this.angkatanStore.selectedId}`, 
           formData, 
           { headers: { 'Content-Type': 'multipart/form-data' } }
         );
-        this.customBackgroundUrl = `${API_BASE_URL}${response.data.path}`;
+        // ---------------------------------------------------
+        
+        // Update data di Store
+        await this.angkatanStore.fetchAngkatans();
+        
         this.cardBackgroundFile = null;
-        alert('Background berhasil disimpan!');
+        this.customBackgroundUrl = null; 
+        
+        alert('Background angkatan berhasil disimpan!');
       } catch (error) {
         console.error("Gagal menyimpan background:", error);
         alert('Gagal menyimpan background. Cek console.');
@@ -175,36 +217,25 @@ export default {
         this.isUploading = false;
       }
     },
-    async fetchBackgroundSetting() {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/settings/background`);
-        if (response.data.value) {
-          this.customBackgroundUrl = `${API_BASE_URL}${response.data.value}`;
-        }
-      } catch (error) {
-        console.error("Gagal mengambil pengaturan background:", error);
-      }
-    },
-    // TAMBAHKAN FUNGSI INI:
+    
     goToPrintPage() {
-      // 1. Simpan data anggota ke sessionStorage
       sessionStorage.setItem('printData', JSON.stringify(this.teamMembers));
       
-      // 2. Simpan URL background yang sedang aktif
-      sessionStorage.setItem('printBackground', this.customBackgroundUrl || '');
-
-      // 3. Buka halaman cetak di tab baru (agar lebih mudah)
+      // Ambil background dari computed property
+      let bgToPrint = '';
+      if (this.cardStyle.backgroundImage) {
+         // Bersihkan 'url("...")' menjadi URL bersih
+         bgToPrint = this.cardStyle.backgroundImage.slice(4, -1).replace(/["']/g, "");
+      }
+      sessionStorage.setItem('printBackground', bgToPrint);
       this.$router.push('/admin/kartu-cetak');
     }
   },
   mounted() {
-    this.fetchTeamMembers(); // <-- SEKARANG FUNGSI INI ADA LAGI
-    this.fetchBackgroundSetting();
+    // Logic ada di watch
   }
 };
 </script>
-
-
 
 <style scoped>
 /* Grid untuk kartu-kartu */
@@ -236,17 +267,12 @@ export default {
   flex-direction: column;
   padding: 1rem; /* 16px */
   
-  /* * PERBAIKAN UTAMA:
-   * Kita hanya pakai SATU gradient ini.
-   * Dibuat lebih pekat di bawah (mulai dari 60%) untuk menutupi
-   * area teks dan QR agar kontras.
-   */
   background: linear-gradient(
     180deg, 
-    rgba(0,0,0,0.5) 0%,   /* Gelap di atas untuk header */
-    rgba(0,0,0,0) 30%,   /* Transparan di tengah */
-    rgba(0,0,0,0.3) 60%,  /* Mulai gelap lagi... */
-    rgba(0,0,0,0.9) 100%  /* Sangat gelap di bawah untuk teks & QR */
+    rgba(0,0,0,0.5) 0%,   
+    rgba(0,0,0,0) 30%,    
+    rgba(0,0,0,0.3) 60%,  
+    rgba(0,0,0,0.9) 100%  
   );
 }
 
@@ -256,8 +282,6 @@ export default {
   align-items: center;
   justify-content: space-between; 
   padding-bottom: 0.75rem; /* 12px */
-  /* Garis dihilangkan */
-  /* border-bottom: 1px solid rgba(255, 255, 255, 0.3); */
 }
 .logo {
   width: 35px; 
@@ -288,18 +312,12 @@ export default {
   height: 250px; 
   border-radius: 0.375rem; 
   overflow: hidden;
-  /* position: relative; (Dihapus) */
 }
-
-/* * Shadow spesifik di foto (.photo-container::before)
- * SUDAH DIHAPUS TOTAL KARENA MENYEBABKAN EFEK MENGAMBANG
- */
 
 .member-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* z-index: 0; (Dihapus) */
 }
 
 .member-details {
@@ -308,18 +326,19 @@ export default {
   left: 0;
   right: 0;
   width: 100%;
-  /* z-index: 2; (Dihapus) */
 }
 .member-name {
   font-weight: 700;
   font-size: 1.25rem; 
   text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+  line-height: 1.2;
 }
 .member-position {
   font-size: 0.875rem; 
   font-weight: 500;
   opacity: 0.9;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  line-height: 1.2;
 }
 
 .qr-code-container {
@@ -329,8 +348,7 @@ export default {
   transform: translateX(-50%);
   line-height: 0;
   
-  background-color: white; /* Tetap ada agar QR bisa di-scan */
-  /* z-index: 2; (Dihapus) */
+  background-color: white; 
 }
 .qr-code {
   width: 100px; 
@@ -341,7 +359,6 @@ export default {
 
 /* CSS KHUSUS UNTUK PRINT */
 @media print {
-  /* Sembunyikan semua elemen UI */
   .print-hide, #app > div > nav, #app > div > header { 
     display: none !important; 
     visibility: hidden !important;
@@ -363,7 +380,6 @@ export default {
     padding: 10mm; 
   }
 
-  /* 3 KARTU PER BARIS */
   .card-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -376,8 +392,6 @@ export default {
     box-shadow: none;
     border: 0.5px solid #ccc; 
   }
-
-  /* Catatan: Aturan print ini mungkin perlu penyesuaian untuk layout tumpuk */
 
   .card-content-overlay {
     padding: 4mm;

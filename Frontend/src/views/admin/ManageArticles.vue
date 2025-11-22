@@ -13,6 +13,9 @@
           <h6 class="text-slate-700 text-xl font-bold">
             {{ isEditing ? 'Edit Artikel/Galeri' : 'Buat Artikel/Galeri Baru' }}
           </h6>
+           <small v-if="angkatanStore.activeAngkatan" class="text-emerald-600 font-bold block mt-1">
+            Mengelola untuk: {{ angkatanStore.activeAngkatan.name }}
+          </small>
         </div>
         <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
           <form @submit.prevent="submitForm">
@@ -47,19 +50,19 @@
                   <label class="block uppercase text-slate-600 text-xs font-bold mb-2">Gambar Galeri (Bisa Pilih Banyak)</label>
                   <input type="file" @change="handleFileChange($event, 'gallery')" ref="galleryInput" class="custom-file-input" multiple/>
                   <div v-if="form.gallery && form.gallery.length" class="mt-4">
-                     <p class="text-xs text-slate-500 mb-2">Gambar galeri saat ini:</p>
-                     <div class="flex flex-wrap gap-2">
-                       <div v-for="(path, index) in form.gallery" :key="index" class="relative">
-                         <img :src="getFullImageUrl(path)" class="w-20 h-20 rounded-lg shadow-md object-cover" :style="{ opacity: imagesToDelete.includes(path) ? '0.4' : '1' }"/>
-                         <button 
-                           v-if="isEditing"
-                           @click.prevent="markImageForDeletion(path)"
-                           class="absolute top-0 right-0 -m-3 bg-red-500 text-white rounded-full h-8 w-8 flex items-center justify-center text-lg font-bold shadow-lg hover:bg-red-600 focus:outline-none"
-                         >
-                           &times;
-                         </button>
-                       </div>
-                     </div>
+                      <p class="text-xs text-slate-500 mb-2">Gambar galeri saat ini:</p>
+                      <div class="flex flex-wrap gap-2">
+                        <div v-for="(path, index) in form.gallery" :key="index" class="relative">
+                          <img :src="getFullImageUrl(path)" class="w-20 h-20 rounded-lg shadow-md object-cover" :style="{ opacity: imagesToDelete.includes(path) ? '0.4' : '1' }"/>
+                          <button 
+                            v-if="isEditing"
+                            @click.prevent="markImageForDeletion(path)"
+                            class="absolute top-0 right-0 -m-3 bg-red-500 text-white rounded-full h-8 w-8 flex items-center justify-center text-lg font-bold shadow-lg hover:bg-red-600 focus:outline-none"
+                          >
+                            &times;
+                          </button>
+                        </div>
+                      </div>
                   </div>
               </div>
             </div>
@@ -92,6 +95,9 @@
               </tr>
             </thead>
             <tbody>
+               <tr v-if="articles.length === 0">
+                  <td colspan="4" class="text-center p-4 text-blueGray-500">Tidak ada artikel di angkatan ini.</td>
+              </tr>
               <tr v-for="article in articles" :key="article.id" class="hover:bg-slate-50">
                 <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4">
                   <img :src="getFullImageUrl(article.featured_image_path)" class="h-12 w-12 bg-white rounded-md border object-cover" :alt="article.title" />
@@ -117,6 +123,7 @@
 
 <script>
 import axios from 'axios';
+import { useAngkatanStore } from '@/stores/angkatan'; // 1. Import Store
 
 // URL untuk mengambil SEMUA artikel (tanpa paginasi) untuk admin
 const FETCH_URL = 'http://localhost:8000/api/all-articles'; 
@@ -126,6 +133,7 @@ const RESOURCE_URL = 'http://localhost:8000/api/articles';
 export default {
   data() {
     return {
+      angkatanStore: useAngkatanStore(), // 2. Gunakan Store
       articles: [],
       form: this.getInitialForm(),
       selectedFeaturedFile: null,
@@ -134,6 +142,15 @@ export default {
       notification: { show: false, message: '', type: 'success' },
       imagesToDelete: [],
     };
+  },
+  // 3. Watcher untuk Auto-Reload
+  watch: {
+    'angkatanStore.selectedId': {
+      handler(newVal) {
+        if (newVal) this.fetchArticles();
+      },
+      immediate: true
+    }
   },
   methods: {
     getInitialForm() {
@@ -174,16 +191,31 @@ export default {
       }
     },
     async fetchArticles() {
+      if (!this.angkatanStore.selectedId) return; // Tunggu angkatan
+
       try {
-        const response = await axios.get(FETCH_URL);
-        this.articles = response.data;
+        // 4. Kirim params angkatan_id (perhatikan ini menggunakan FETCH_URL)
+        const response = await axios.get(FETCH_URL, {
+             params: { angkatan_id: this.angkatanStore.selectedId }
+        });
+        // Cek apakah response array langsung atau object paginate
+        this.articles = Array.isArray(response.data) ? response.data : (response.data.data || []);
       } catch (error) {
         this.showNotification('Gagal memuat artikel.', 'error');
       }
     },
     async submitForm() {
+      // Validasi Angkatan
+      if (!this.angkatanStore.selectedId) {
+          alert("Mohon pilih Angkatan terlebih dahulu di menu atas!");
+          return;
+      }
+
       const formData = new FormData();
       
+      // 5. Sisipkan angkatan_id
+      formData.append('angkatan_id', this.angkatanStore.selectedId);
+
       Object.keys(this.form).forEach(key => {
         if (key !== 'id' && key !== 'gallery' && this.form[key] !== null) {
           formData.append(key, this.form[key]);
@@ -258,12 +290,13 @@ export default {
     }
   },
   mounted() {
-    this.fetchArticles();
+      // mounted sudah digantikan oleh watch
   },
 };
 </script>
 
 <style scoped>
+/* (Style tidak berubah) */
 .form-input-line {
   border: 0;
   border-bottom: 2px solid #e2e8f0;

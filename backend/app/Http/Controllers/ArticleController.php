@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Article; // Pastikan 'use' statement ini ada di atas
+use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -22,7 +22,6 @@ class ArticleController extends Controller
         return response()->json($query->get());
     }
 
-    // Contoh untuk fetchLatest (yang dipakai di Landing Page)
     public function fetchLatest(Request $request)
     {
         $query = Article::latest()->limit(3);
@@ -37,12 +36,19 @@ class ArticleController extends Controller
     }
 
     /**
-     * * Menampilkan daftar semua artikel/galeri.
+     * Menampilkan daftar semua artikel/galeri (Untuk Admin).
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil semua artikel, urutkan dari yang terbaru
-        return Article::latest()->paginate(9);
+        $query = Article::latest();
+
+        // --- TAMBAHAN: FILTER ANGKATAN DI ADMIN ---
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        }
+        // ------------------------------------------
+
+        return $query->paginate(9);
     }
 
     /**
@@ -51,6 +57,10 @@ class ArticleController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            // --- TAMBAHAN WAJIB: ID ANGKATAN ---
+            'angkatan_id' => 'required|exists:angkatans,id',
+            // -----------------------------------
+
             'title' => 'required|string|max:255',
             'excerpt' => 'nullable|string',
             'content' => 'nullable|string',
@@ -59,7 +69,7 @@ class ArticleController extends Controller
             'gallery_files.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
-        $validated['slug'] = Str::slug($validated['title']);
+        $validated['slug'] = Str::slug($validated['title']) . '-' . uniqid(); // Tambah uniqid agar slug unik
 
         if ($request->hasFile('featured_image_file')) {
             $validated['featured_image_path'] = $request->file('featured_image_file')->store('articles', 'public');
@@ -74,6 +84,7 @@ class ArticleController extends Controller
         }
         $validated['gallery'] = $galleryPaths;
 
+        // Simpan ke database (angkatan_id sudah ada di dalam $validated)
         $article = Article::create($validated);
 
         return response()->json($article, 201);
@@ -103,7 +114,10 @@ class ArticleController extends Controller
             'gallery_files.*' => 'nullable|image|max:2048',
         ]);
         
-        $validated['slug'] = Str::slug($validated['title']);
+        // Update slug jika judul berubah
+        if ($request->title !== $article->title) {
+            $validated['slug'] = Str::slug($validated['title']) . '-' . uniqid();
+        }
 
         if ($request->hasFile('featured_image_file')) {
             if ($article->featured_image_path) {
