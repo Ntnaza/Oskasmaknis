@@ -7,6 +7,10 @@
           <h6 class="text-blueGray-700 text-xl font-bold">
             {{ isEditing ? 'Edit Jadwal Kegiatan' : 'Tambah Jadwal Kegiatan Baru' }}
           </h6>
+          <!-- Penanda Angkatan Aktif -->
+          <small v-if="angkatanStore.activeAngkatan" class="text-emerald-600 font-bold block mt-1">
+            Mengelola untuk: {{ angkatanStore.activeAngkatan.name }}
+          </small>
         </div>
         <div class="flex-auto px-4 lg:px-10 py-10 pt-0">
           <form @submit.prevent="submitForm">
@@ -133,7 +137,7 @@
                 <td colspan="5" class="text-center p-4">Memuat data kegiatan...</td>
               </tr>
               <tr v-if="!isLoading && activities.length === 0">
-                <td colspan="5" class="text-center p-4 text-blueGray-500">Belum ada kegiatan yang dibuat.</td>
+                <td colspan="5" class="text-center p-4 text-blueGray-500">Belum ada kegiatan di angkatan ini.</td>
               </tr>
               <tr v-for="activity in activities" :key="activity.id">
                 <td class="border-t-0 px-6 align-middle border-l-0 border-r-0 text-xs whitespace-nowrap p-4 font-bold">
@@ -168,20 +172,29 @@
 
 <script>
 import axios from 'axios';
-// BARIS 'API_BASE_URL' YANG TIDAK TERPAKAI SUDAH DIHAPUS
+import { useAngkatanStore } from '@/stores/angkatan'; // IMPORT STORE
 
 export default {
   data() {
     return {
-      activities: [], // Daftar kegiatan
+      angkatanStore: useAngkatanStore(), // INISIALISASI STORE
+      activities: [], 
       isLoading: true,
       isSubmitting: false,
       isEditing: false,
       form: this.getInitialForm(),
     };
   },
+  // WATCHER: Refresh data saat angkatan berubah
+  watch: {
+    'angkatanStore.selectedId': {
+      handler(newVal) {
+        if (newVal) this.fetchActivities();
+      },
+      immediate: true
+    }
+  },
   methods: {
-    // (Semua method lainnya tidak berubah)
     getInitialForm() {
       return {
         id: null,
@@ -209,10 +222,15 @@ export default {
       }
     },
     async fetchActivities() {
+      if (!this.angkatanStore.selectedId) return;
+
       this.isLoading = true;
       try {
-        const response = await axios.get('/api/admin/calendar-activities');
-        this.activities = response.data.data; // .data karena paginated
+        // KIRIM PARAM ANGKATAN ID
+        const response = await axios.get('/api/admin/calendar-activities', {
+            params: { angkatan_id: this.angkatanStore.selectedId }
+        });
+        this.activities = response.data.data; 
       } catch (error) {
         console.error("Gagal mengambil kegiatan:", error);
       } finally {
@@ -220,12 +238,23 @@ export default {
       }
     },
     async submitForm() {
+      if (!this.angkatanStore.selectedId) {
+          alert("Mohon pilih Angkatan terlebih dahulu!");
+          return;
+      }
+
       this.isSubmitting = true;
       try {
+        // KIRIM DATA BERSAMA ANGKATAN ID
+        const dataToSend = {
+            ...this.form,
+            angkatan_id: this.angkatanStore.selectedId
+        };
+
         if (this.isEditing) {
-          await axios.put(`/api/admin/calendar-activities/${this.form.id}`, this.form);
+          await axios.put(`/api/admin/calendar-activities/${this.form.id}`, dataToSend);
         } else {
-          await axios.post('/api/admin/calendar-activities', this.form);
+          await axios.post('/api/admin/calendar-activities', dataToSend);
         }
         this.fetchActivities();
         this.resetForm();
@@ -255,14 +284,11 @@ export default {
       }
       try {
         await axios.delete(`/api/admin/calendar-activities/${id}`);
-        this.activities = this.activities.filter(activity => activity.id !== id);
+        this.fetchActivities(); // Refresh
       } catch (error) {
         console.error("Gagal menghapus kegiatan:", error);
       }
     }
   },
-  mounted() {
-    this.fetchActivities();
-  }
 };
 </script>

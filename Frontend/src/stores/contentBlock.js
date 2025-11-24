@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import api from '@/services/api';
+import { useAngkatanStore } from './angkatan'; // <-- 1. IMPORT STORE ANGKATAN
 
 export const useContentBlockStore = defineStore('contentBlock', {
   state: () => ({
@@ -7,8 +8,18 @@ export const useContentBlockStore = defineStore('contentBlock', {
   }),
   actions: {
     async fetchBlocksByPage(pageSlug) {
+      const angkatanStore = useAngkatanStore(); // <-- 2. GUNAKAN STORE
+
       try {
-        const response = await api.get(`/content-blocks?page_slug=${pageSlug}`);
+        // <-- 3. KIRIM PARAMETER ANGKATAN_ID
+        // Menggunakan opsi 'params' axios agar lebih rapi daripada string concatenation
+        const response = await api.get('/content-blocks', {
+            params: {
+                page_slug: pageSlug,
+                angkatan_id: angkatanStore.selectedId
+            }
+        });
+
         const blocksAsObject = response.data.data.reduce((obj, item) => {
           obj[item.section_key] = item;
           return obj;
@@ -21,41 +32,45 @@ export const useContentBlockStore = defineStore('contentBlock', {
     
     // FUNGSI UPDATE BARU DENGAN KEMAMPUAN UPLOAD
     async updateContentBlocksWithFiles(blocksArray, files) {
+      const angkatanStore = useAngkatanStore(); // <-- 4. GUNAKAN STORE
       const formData = new FormData();
+
+      // <-- 5. SISIPKAN ANGKATAN_ID KE FORMDATA
+      // Ini wajib agar Backend tahu konten ini milik angkatan mana
+      if (angkatanStore.selectedId) {
+          formData.append('angkatan_id', angkatanStore.selectedId);
+      } else {
+          alert("Mohon pilih angkatan terlebih dahulu!");
+          throw new Error("Angkatan ID missing");
+      }
 
       // 1. Tambahkan data teks (dalam format string JSON)
       formData.append('blocks', JSON.stringify(blocksArray));
 
       // 2. Tambahkan file-file (jika ada)
       if (files.osisFile) {
-        // Nama key 'osisFile' di sini harus cocok dengan $request->hasFile('osisFile') di backend
         formData.append('osisFile', files.osisFile); 
       }
       if (files.mpkFile) {
-        // Nama key 'mpkFile' di sini harus cocok dengan $request->hasFile('mpkFile') di backend
         formData.append('mpkFile', files.mpkFile);
       }
-      // ======================================================
-      // ==           TAMBAHKAN BLOK INI UNTUK PEMBINA         ==
-      // ======================================================
+      
+      // TAMBAHAN UNTUK PEMBINA
       if (files.pembinaFile) {
-        // Nama key 'pembinaFile' di sini harus cocok dengan $request->hasFile('pembinaFile') di backend
         formData.append('pembinaFile', files.pembinaFile);
       }
-      // ======================================================
 
       try {
         // Kirim sebagai multipart/form-data
-        // Pastikan endpoint '/content-blocks/update-bulk' benar
         await api.post('/content-blocks/update-bulk', formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
-            // Jika API Anda memerlukan metode PUT atau PATCH untuk update,
-            // Anda mungkin perlu menambahkan '_method': 'PUT' atau 'PATCH' di FormData
-            // formData.append('_method', 'PUT'); 
-            // Atau gunakan api.put(...) jika library Anda mendukungnya dengan FormData
           },
         });
+        
+        // Refresh data setelah update agar tampilan UI sinkron
+        await this.fetchBlocksByPage('index');
+        
       } catch (error) {
         console.error('Error updating content blocks:', error);
         throw error;

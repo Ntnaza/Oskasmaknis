@@ -3,35 +3,41 @@
 namespace App\Http\Controllers;
 
 use App\Models\WorkProgram;
+use App\Models\Angkatan; // <-- Jangan lupa import ini
 use Illuminate\Http\Request;
 
 class WorkProgramController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Menampilkan daftar proker (difilter per angkatan).
      */
     public function index(Request $request)
     {
-        $query = WorkProgram::query(); 
+        // 1. Gunakan 'with' agar data penanggung jawab ikut terambil
+        $query = WorkProgram::with('teamMember')->orderBy('start_date', 'desc');
 
-        // --- LOGIKA FILTER ANGKATAN ---
+        // 2. Logika Filter Angkatan
         if ($request->filled('angkatan_id')) {
             $query->where('angkatan_id', $request->input('angkatan_id'));
+        } else {
+            // Fallback: Ambil angkatan aktif jika filter kosong
+            $active = Angkatan::where('is_active', true)->first();
+            if ($active) {
+                $query->where('angkatan_id', $active->id);
+            }
         }
-        // ------------------------------
 
         return response()->json($query->get());
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Simpan proker baru.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            // --- TAMBAHAN WAJIB: ID ANGKATAN ---
+            // --- WAJIB: Pastikan angkatan_id divalidasi ---
             'angkatan_id' => 'required|exists:angkatans,id',
-            // -----------------------------------
             
             'team_member_id' => 'required|exists:team_members,id', 
             'title' => 'required|string|max:255',
@@ -42,23 +48,25 @@ class WorkProgramController extends Controller
         ]);
 
         $workProgram = WorkProgram::create($validated);
+        
         return response()->json($workProgram, 201);
     }
 
     /**
-     * Display the specified resource.
+     * Tampilkan detail 1 proker.
      */
     public function show(WorkProgram $workProgram)
     {
-        return $workProgram;
+        return $workProgram->load('teamMember');
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update proker.
      */
     public function update(Request $request, WorkProgram $workProgram)
     {
         $validated = $request->validate([
+            'angkatan_id' => 'sometimes|exists:angkatans,id',
             'team_member_id' => 'required|exists:team_members,id', 
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -68,11 +76,12 @@ class WorkProgramController extends Controller
         ]);
 
         $workProgram->update($validated);
+        
         return response()->json($workProgram);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Hapus proker.
      */
     public function destroy(WorkProgram $workProgram)
     {
@@ -80,19 +89,21 @@ class WorkProgramController extends Controller
         return response()->json(['message' => 'Program kerja berhasil dihapus']);
     }
 
-    // TAMBAHKAN METHOD INI
+    /**
+     * Method Tambahan: Untuk Dropdown Selection di tempat lain
+     * (Opsional, tapi berguna jika nanti butuh list proker ringkas)
+     */
     public function getAllForSelection(Request $request)
     {
         $query = WorkProgram::select('id', 'title');
 
-        // Kita tambahkan filter angkatan di sini juga
-        // Agar saat memilih proker (misal untuk di-highlight di landing page),
-        // yang muncul hanya proker angkatan tersebut.
         if ($request->filled('angkatan_id')) {
             $query->where('angkatan_id', $request->input('angkatan_id'));
+        } else {
+             $active = Angkatan::where('is_active', true)->first();
+             if ($active) $query->where('angkatan_id', $active->id);
         }
 
-        $workPrograms = $query->get();
-        return response()->json(['data' => $workPrograms]);
+        return response()->json(['data' => $query->orderBy('title')->get()]);
     }
 }

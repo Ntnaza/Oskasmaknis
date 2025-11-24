@@ -27,5 +27,9 @@ class WorkProgram extends Model
     {
         return $this->belongsTo(TeamMember::class);
     }
+    public function angkatan()
+    {
+        return $this->belongsTo(Angkatan::class);
+    }
 }
 

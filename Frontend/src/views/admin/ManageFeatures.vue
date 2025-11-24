@@ -112,13 +112,144 @@
 </template>
 
 <script>
-// Script tidak berubah
 import axios from 'axios';
+import { useAngkatanStore } from "@/stores/angkatan"; // Import Store
+
 const API_URL = 'http://localhost:8000/api/features';
+
 export default {
-  data() { return { features: [], form: { id: null, icon: 'fas fa-star', color: 'red', title: '', description: '', order: 0 }, isEditing: false, availableIcons: [ 'fas fa-award', 'fas fa-retweet', 'fas fa-fingerprint', 'fas fa-user-friends', 'fas fa-calendar-alt', 'fas fa-bullhorn', 'fas fa-cogs', 'fas fa-book-open', 'fas fa-lightbulb' ], availableColors: [ 'red', 'orange', 'amber', 'emerald', 'teal', 'lightBlue', 'indigo', 'purple', 'pink' ], }; },
-  methods: { async fetchFeatures() { try { const response = await axios.get(API_URL); this.features = response.data.sort((a, b) => a.order - b.order); } catch (error) { console.error("Gagal ambil fitur:", error); } }, submitForm() { if (this.isEditing) { this.updateFeature(); } else { this.createFeature(); } }, async createFeature() { try { await axios.post(API_URL, this.form); alert('Fitur ditambah!'); this.resetForm(); await this.fetchFeatures(); } catch (error) { console.error("Gagal tambah:", error); alert('Gagal tambah.'); } }, editFeature(feature) { this.isEditing = true; this.form = { ...feature }; this.$el.scrollIntoView({ behavior: 'smooth' }); }, async updateFeature() { try { await axios.put(`${API_URL}/${this.form.id}`, this.form); alert('Fitur diupdate!'); this.resetForm(); await this.fetchFeatures(); } catch (error) { console.error("Gagal update:", error); alert('Gagal update.'); } }, async deleteFeature(id) { if (confirm('Yakin hapus?')) { try { await axios.delete(`${API_URL}/${id}`); alert('Fitur dihapus.'); await this.fetchFeatures(); } catch (error) { console.error("Gagal hapus:", error); alert('Gagal hapus.'); } } }, resetForm() { this.isEditing = false; this.form = { id: null, icon: 'fas fa-star', color: 'red', title: '', description: '', order: 0 }; } },
-  mounted() { this.fetchFeatures(); },
+  data() {
+    return {
+      angkatanStore: useAngkatanStore(), // Inisialisasi Store
+      features: [],
+      form: {
+        id: null,
+        icon: 'fas fa-star',
+        color: 'red',
+        title: '',
+        description: '',
+        order: 0
+      },
+      isEditing: false,
+      availableIcons: [
+        'fas fa-award', 'fas fa-retweet', 'fas fa-fingerprint', 
+        'fas fa-user-friends', 'fas fa-calendar-alt', 'fas fa-bullhorn', 
+        'fas fa-cogs', 'fas fa-book-open', 'fas fa-lightbulb'
+      ],
+      availableColors: [
+        'red', 'orange', 'amber', 'emerald', 
+        'teal', 'lightBlue', 'indigo', 'purple', 'pink'
+      ],
+    };
+  },
+  
+  // Watcher agar otomatis refresh saat ganti tahun
+  watch: {
+    'angkatanStore.selectedId': {
+      handler(newVal) {
+        if (newVal) {
+          this.fetchFeatures();
+        }
+      },
+      immediate: true
+    }
+  },
+
+  methods: {
+    async fetchFeatures() {
+      // Jangan fetch kalau belum ada angkatan dipilih
+      if (!this.angkatanStore.selectedId) return;
+
+      try {
+        const response = await axios.get(API_URL, {
+            params: {
+                angkatan_id: this.angkatanStore.selectedId // Kirim parameter
+            }
+        });
+        this.features = response.data; // Backend sudah sorting, tidak perlu sort di sini lagi
+      } catch (error) {
+        console.error("Gagal ambil fitur:", error);
+      }
+    },
+
+    submitForm() {
+      if (!this.angkatanStore.selectedId) {
+          alert("Pilih angkatan dulu!");
+          return;
+      }
+      
+      if (this.isEditing) {
+        this.updateFeature();
+      } else {
+        this.createFeature();
+      }
+    },
+
+    async createFeature() {
+      try {
+        // Gabungkan data form dengan angkatan_id
+        const payload = {
+            ...this.form,
+            angkatan_id: this.angkatanStore.selectedId 
+        };
+        
+        await axios.post(API_URL, payload);
+        alert('Fitur ditambah!');
+        this.resetForm();
+        await this.fetchFeatures();
+      } catch (error) {
+        console.error("Gagal tambah:", error);
+        alert('Gagal tambah.');
+      }
+    },
+
+    editFeature(feature) {
+      this.isEditing = true;
+      this.form = { ...feature }; // Copy object
+      this.$el.scrollIntoView({ behavior: 'smooth' });
+    },
+
+    async updateFeature() {
+      try {
+        // Saat update, angkatan_id biasanya tidak berubah, tapi kirim saja biar aman
+        const payload = { ...this.form, angkatan_id: this.angkatanStore.selectedId };
+        
+        await axios.put(`${API_URL}/${this.form.id}`, payload);
+        alert('Fitur diupdate!');
+        this.resetForm();
+        await this.fetchFeatures();
+      } catch (error) {
+        console.error("Gagal update:", error);
+        alert('Gagal update.');
+      }
+    },
+
+    async deleteFeature(id) {
+      if (confirm('Yakin hapus?')) {
+        try {
+          await axios.delete(`${API_URL}/${id}`);
+          alert('Fitur dihapus.');
+          await this.fetchFeatures();
+        } catch (error) {
+          console.error("Gagal hapus:", error);
+          alert('Gagal hapus.');
+        }
+      }
+    },
+
+    resetForm() {
+      this.isEditing = false;
+      this.form = {
+        id: null,
+        icon: 'fas fa-star',
+        color: 'red',
+        title: '',
+        description: '',
+        order: 0
+      };
+    }
+  },
+  // Mounted dihapus karena sudah ada immediate: true di watcher
 };
 </script>
 

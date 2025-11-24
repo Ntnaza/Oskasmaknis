@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TeamMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage; // <-- Pastikan ini ada
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str; 
@@ -14,24 +14,29 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 class TeamMemberController extends Controller
 {
     /**
-     * Menampilkan daftar semua anggota tim.
+     * Menampilkan daftar anggota tim dengan Logika "Smart Filtering".
      */
     public function index(Request $request)
     {
-        $query = TeamMember::orderBy('order', 'asc');
+        // 1. Eager Loading ('with'): Mengambil data angkatan sekaligus dalam 1 query.
+        //    Ini mencegah masalah N+1 Query (Loading lambat saat data banyak).
+        $query = TeamMember::with('angkatan')->orderBy('order', 'asc');
 
-        // --- PERBAIKAN LOGIKA FILTER ---
-        // Jika ada parameter 'angkatan_id' di URL, kita filter.
-        // Jika tidak ada, kita KOSONGKAN hasilnya (agar data tidak campur aduk).
+        // --- LOGIKA PENALARAN TINGGI (SMART FILTER) ---
         
+        // Skenario A: Frontend meminta angkatan spesifik (User klik dropdown)
         if ($request->filled('angkatan_id')) {
-            $query->where('angkatan_id', $request->input('angkatan_id'));
-        } else {
-            // Opsional: Jika tidak ada filter angkatan, jangan tampilkan apa-apa
-            // Ini mencegah admin bingung melihat data campur aduk
-            // return []; // Uncomment baris ini jika ingin tabel kosong saat tidak ada filter
+            // Menggunakan Scope yang sudah kita buat di Model
+            $query->fromAngkatan($request->input('angkatan_id'));
+        } 
+        // Skenario B: Frontend tidak mengirim apa-apa (Halaman pertama load)
+        else {
+            // Otomatis tampilkan angkatan yang sedang AKTIF menjabat
+            // Jadi halaman tidak kosong, tapi langsung relevan.
+            $query->currentActive();
         }
-        // ------------------------------------
+        
+        // ---------------------------------------------
 
         return $query->get();
     }
@@ -56,9 +61,8 @@ class TeamMemberController extends Controller
         
         try {
             $validated = $request->validate([
-                // --- TAMBAHKAN VALIDASI INI ---
+                // WAJIB: Setiap anggota baru HARUS punya angkatan
                 'angkatan_id' => 'required|exists:angkatans,id', 
-                // ------------------------------
                 
                 'name' => 'required|string|max:255',
                 'position' => 'required|string|max:255',
@@ -90,7 +94,6 @@ class TeamMemberController extends Controller
             unset($validated['photo_file']);
             unset($validated['header_photo_file']);
             
-            // Simpan data (angkatan_id sudah termasuk di $validated)
             $teamMember = new TeamMember($validated);
             $teamMember->member_token = (string) Str::uuid(); 
             $teamMember->save(); 
@@ -107,11 +110,12 @@ class TeamMemberController extends Controller
     }
 
     /**
-     * Menampilkan detail satu anggota tim beserta program kerjanya.
+     * Menampilkan detail satu anggota.
      */
     public function show(TeamMember $teamMember)
     {
-        return $teamMember->load('workPrograms');
+        // Load workPrograms DAN info angkatan
+        return $teamMember->load(['workPrograms', 'angkatan']);
     }
 
     /**
@@ -121,7 +125,6 @@ class TeamMemberController extends Controller
     {
         Log::info('Update request data (raw):', $request->all());
 
-        // --- PRE-PROCESSING DATA FORM ---
         $data = $request->all();
         if ($request->has('social_links') && is_string($request->input('social_links'))) {
             $data['social_links'] = json_decode($request->input('social_links'), true);
@@ -130,10 +133,12 @@ class TeamMemberController extends Controller
             $data['bio_data'] = json_decode($request->input('bio_data'), true);
         }
         $request->replace($data);
-        // --- BATAS PRE-PROCESSING ---
 
         try {
              $validated = $request->validate([
+                // OPTIONAL: Admin boleh memindahkan anggota ke angkatan lain saat edit
+                'angkatan_id' => 'sometimes|exists:angkatans,id',
+
                 'name' => 'required|string|max:255',
                 'position' => 'required|string|max:255',
                 'order' => 'required|integer|min:0',
@@ -172,7 +177,9 @@ class TeamMemberController extends Controller
             unset($validated['header_photo_file']);
 
             $teamMember->update($validated);
-            $updatedMember = $teamMember->fresh();
+            // Load ulang data termasuk relasi angkatan untuk dikembalikan ke frontend
+            $updatedMember = $teamMember->fresh(['angkatan']);
+            
             Log::info('Updated team member data:', $updatedMember->toArray());
 
             return response()->json(['message' => 'Anggota tim berhasil diperbarui!', 'data' => $updatedMember]);
@@ -189,9 +196,8 @@ class TeamMemberController extends Controller
         }
     }
 
-    /**
-     * Menghapus anggota tim.
-     */
+    // ... (Method destroy, generateQrCode, servePhoto SAMA SEPERTI SEBELUMNYA) ...
+    
     public function destroy(TeamMember $teamMember)
     {
         try {
@@ -209,9 +215,6 @@ class TeamMemberController extends Controller
         }
     }
 
-    /**
-     * Men-generate dan mengembalikan gambar QR code (SVG) untuk anggota.
-     */
     public function generateQrCode(TeamMember $teamMember)
     {
         $token = $teamMember->member_token;
@@ -230,29 +233,17 @@ class TeamMemberController extends Controller
         return response($svg)->header('Content-Type', 'image/svg+xml');
     }
 
-    // --- METHOD BARU UNTUK SERVE FOTO (SOLUSI CORS) ---
-
-    /**
-     * Menyajikan file foto anggota dengan header CORS yang benar.
-     */
     public function servePhoto(TeamMember $teamMember)
     {
         $path = $teamMember->photo_path;
 
-        // Cek apakah file ada di disk 'public'
         if (!$path || !Storage::disk('public')->exists($path)) {
-            // Jika tidak ada, bisa kembalikan 404
             abort(404, 'File foto tidak ditemukan.');
         }
 
-        // Ambil file dari storage
         $file = Storage::disk('public')->get($path);
-        
-        // Dapatkan tipe mime (misal: 'image/png')
         $mimeType = Storage::disk('public')->mimeType($path);
 
-        // Kembalikan file sebagai respons yang benar
-        // Respons ini akan otomatis melewati middleware CORS
         return response($file, 200)->header('Content-Type', $mimeType);
     }
 }

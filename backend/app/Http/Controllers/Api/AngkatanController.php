@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Angkatan;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage; // <-- TAMBAHKAN INI
+use Illuminate\Support\Facades\Storage;
 
 class AngkatanController extends Controller
 {
@@ -27,7 +27,6 @@ class AngkatanController extends Controller
             'year_period' => 'required|string|max:20',
             'theme_color' => 'required|string|max:7', 
             'is_active' => 'boolean',
-            // Validasi gambar background
             'card_background_file' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
@@ -40,6 +39,9 @@ class AngkatanController extends Controller
         if ($request->hasFile('card_background_file')) {
             $path = $request->file('card_background_file')->store('angkatan_backgrounds', 'public');
             $validated['card_background_path'] = $path;
+            
+            // [Best Practice] Hapus raw file object agar tidak ikut tersimpan ke query (meski Eloquent mengabaikannya)
+            unset($validated['card_background_file']);
         }
         // --------------------------------
 
@@ -80,9 +82,13 @@ class AngkatanController extends Controller
             if ($angkatan->card_background_path) {
                 Storage::disk('public')->delete($angkatan->card_background_path);
             }
+            
             // 2. Upload file baru
             $path = $request->file('card_background_file')->store('angkatan_backgrounds', 'public');
             $validated['card_background_path'] = $path;
+            
+            // [Best Practice] Hapus object file dari array data
+            unset($validated['card_background_file']);
         }
         // --------------------------------
 
@@ -96,7 +102,7 @@ class AngkatanController extends Controller
      */
     public function destroy(Angkatan $angkatan)
     {
-        // Hapus background jika ada
+        // Hapus background jika ada sebelum hapus data
         if ($angkatan->card_background_path) {
             Storage::disk('public')->delete($angkatan->card_background_path);
         }

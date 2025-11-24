@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CalendarActivity;
+use App\Models\Angkatan; // <-- 1. Import Model Angkatan
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -21,30 +22,44 @@ class CalendarActivityController extends Controller
             'end' => 'required|date',
         ]);
 
-        // Cari semua kegiatan yang:
-        // - Berakhir SETELAH tanggal 'start' kalender
-        // - DAN Dimulai SEBELUM tanggal 'end' kalender
-        // Ini adalah logika standar untuk mengambil event dalam rentang tanggal
-        $activities = CalendarActivity::where('start_date', '<=', $validated['end'])
-                                      ->where('end_date', '>=', $validated['start'])
-                                      ->orWhere(function($query) use ($validated) {
-                                          // Handle event yang tidak punya 'end_date' (satu hari)
-                                          $query->whereNull('end_date')
-                                                ->whereBetween('start_date', [$validated['start'], $validated['end']]);
-                                      })
-                                      ->get();
+        $query = CalendarActivity::query();
+
+        // --- 2. LOGIKA FILTER ANGKATAN (CRITICAL) ---
+        // Kita harus filter angkatan DULU sebelum filter tanggal
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        } else {
+            // Fallback ke angkatan aktif
+            $active = Angkatan::where('is_active', true)->first();
+            if ($active) {
+                $query->where('angkatan_id', $active->id);
+            }
+        }
+        // -------------------------------------------
+
+        // Cari kegiatan yang beririsan dengan rentang tanggal kalender
+        // Kita bungkus dalam where(function) agar logika OR tidak merusak filter angkatan
+        $query->where(function($q) use ($validated) {
+            $q->where('start_date', '<=', $validated['end'])
+              ->where('end_date', '>=', $validated['start'])
+              ->orWhere(function($subQ) use ($validated) {
+                  // Handle event yang tidak punya 'end_date' (satu hari)
+                  $subQ->whereNull('end_date')
+                       ->whereBetween('start_date', [$validated['start'], $validated['end']]);
+              });
+        });
         
-        // Kita ubah formatnya agar sesuai dengan yang diharapkan FullCalendar
-        // (FullCalendar butuh 'title', 'start', 'end')
+        $activities = $query->get();
+        
+        // Format untuk FullCalendar
         $formattedActivities = $activities->map(function ($activity) {
             return [
                 'id' => $activity->id,
                 'title' => $activity->title,
                 'start' => $activity->start_date,
-                'end' => $activity->end_date, // FullCalendar bisa handle jika ini null
+                'end' => $activity->end_date,
                 'category' => $activity->category,
                 'description' => $activity->description,
-                // Kita bisa tambahkan warna berdasarkan kategori
                 'color' => $this->getCategoryColor($activity->category),
             ];
         });
@@ -55,10 +70,17 @@ class CalendarActivityController extends Controller
     /**
      * [ADMIN] Menampilkan daftar semua kegiatan (untuk tabel admin).
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Tampilkan yang terbaru di atas, dengan pagination
-        return CalendarActivity::orderBy('start_date', 'desc')->paginate(20);
+        $query = CalendarActivity::orderBy('start_date', 'desc');
+
+        // --- FILTER ANGKATAN DI ADMIN ---
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        }
+        // --------------------------------
+
+        return $query->paginate(20);
     }
 
     /**
@@ -67,6 +89,7 @@ class CalendarActivityController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
+            'angkatan_id' => 'required|exists:angkatans,id', // <-- WAJIB ADA
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:100',
             'start_date' => 'required|date',
@@ -75,12 +98,10 @@ class CalendarActivityController extends Controller
         ]);
 
         // --- KONVERSI TIMEZONE ---
-        // Ubah string "YYYY-MM-DDTHH:mm" dari 'Asia/Jakarta' ke UTC
         $validatedData['start_date'] = Carbon::parse($validatedData['start_date'], 'Asia/Jakarta')->setTimezone('UTC');
         if (!empty($validatedData['end_date'])) {
             $validatedData['end_date'] = Carbon::parse($validatedData['end_date'], 'Asia/Jakarta')->setTimezone('UTC');
         }
-        // --- BATAS KONVERSI ---
 
         $activity = CalendarActivity::create($validatedData);
 
@@ -92,7 +113,6 @@ class CalendarActivityController extends Controller
      */
     public function show(CalendarActivity $calendarActivity)
     {
-        // 'CalendarActivity $calendarActivity' adalah Route Model Binding
         return response()->json($calendarActivity);
     }
 
@@ -102,6 +122,7 @@ class CalendarActivityController extends Controller
     public function update(Request $request, CalendarActivity $calendarActivity)
     {
         $validatedData = $request->validate([
+            'angkatan_id' => 'sometimes|exists:angkatans,id',
             'title' => 'sometimes|required|string|max:255',
             'category' => 'sometimes|required|string|max:100',
             'start_date' => 'sometimes|required|date',
@@ -116,7 +137,6 @@ class CalendarActivityController extends Controller
         if (!empty($validatedData['end_date'])) {
             $validatedData['end_date'] = Carbon::parse($validatedData['end_date'], 'Asia/Jakarta')->setTimezone('UTC');
         }
-        // --- BATAS KONVERSI ---
 
         $calendarActivity->update($validatedData);
 
@@ -129,7 +149,7 @@ class CalendarActivityController extends Controller
     public function destroy(CalendarActivity $calendarActivity)
     {
         $calendarActivity->delete();
-        return response()->json(null, 204); // 204 = No Content (sukses)
+        return response()->json(null, 204);
     }
 
     /**

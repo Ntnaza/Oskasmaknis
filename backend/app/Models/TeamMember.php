@@ -64,4 +64,34 @@ class TeamMember extends Model
             'event_id'        // Local key di tabel perantara (attendances)
         );
     }
+    public function angkatan()
+    {
+        // Pastikan kamu sudah punya model Angkatan di App\Models\Angkatan
+        return $this->belongsTo(Angkatan::class, 'angkatan_id');
+    }
+
+    /**
+     * Scope: Filter Cepat (Shortcut Query)
+     * Gunanya: Supaya di Controller cukup tulis: TeamMember::fromAngkatan($id)->get();
+     * Tidak perlu tulis: TeamMember::where('angkatan_id', $id)->get();
+     */
+    public function scopeFromAngkatan($query, $angkatanId)
+    {
+        // Jika ID ada, filter. Jika tidak (null), abaikan filter.
+        return $query->when($angkatanId, function ($q) use ($angkatanId) {
+            return $q->where('angkatan_id', $angkatanId);
+        });
+    }
+
+    /**
+     * Scope: Hanya Ambil Angkatan yang Sedang Aktif (Is Active)
+     * Gunanya: Untuk tampilan default Landing Page tanpa user perlu milih tahun.
+     * Cara pakai: TeamMember::currentActive()->get();
+     */
+    public function scopeCurrentActive($query)
+    {
+        return $query->whereHas('angkatan', function ($q) {
+            $q->where('is_active', true);
+        });
+    }
 }

@@ -13,6 +13,7 @@ class Aspiration extends Model
      * Atribut yang boleh diisi secara massal.
      */
     protected $fillable = [
+        'angkatan_id', // <--- WAJIB ADA (KUNCI UTAMA FITUR INI)
         'ticket_id',
         'status',
         'name',
@@ -24,4 +25,20 @@ class Aspiration extends Model
         'file_path',
         'internal_notes',
     ];
+
+    /**
+     * Casting tipe data otomatis
+     */
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
+
+    /**
+     * Relasi ke Angkatan
+     * Berguna jika nanti ingin menampilkan: "Aspirasi ini untuk Angkatan 2024"
+     */
+    public function angkatan()
+    {
+        return $this->belongsTo(Angkatan::class);
+    }
 }

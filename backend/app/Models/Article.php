@@ -4,64 +4,73 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage; 
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Article extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
-        'angkatan_id', // <-- TAMBAHAN PENTING!
+        'angkatan_id',
         'title',
         'slug',
         'excerpt',
         'content',
         'featured_image_path',
-        'gallery',
+        'gallery_files',
         'published_at',
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
-        'gallery' => 'array',
+        'gallery_files' => 'array', // Otomatis convert JSON ke Array
         'published_at' => 'datetime',
     ];
     
-    // ======================================================
-    // TAMBAHAN BARU UNTUK URL GAMBAR OTOMATIS
-    // ======================================================
+    protected $appends = ['image_url', 'gallery_urls'];
 
-    /**
-     * Menambahkan atribut 'image_url' ke model secara otomatis saat diubah ke JSON.
-     */
-    protected $appends = ['image_url'];
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($article) {
+            $article->slug = Str::slug($article->title);
+        });
+        static::updating(function ($article) {
+            $article->slug = Str::slug($article->title);
+        });
+    }
 
-    /**
-     * Accessor (fungsi 'get') untuk membuat atribut 'image_url'.
-     * Fungsi ini akan dipanggil secara otomatis.
-     */
+    // --- ACCESSOR YANG LEBIH AMAN (SAFE) ---
+
     public function getImageUrlAttribute()
     {
-        // Cek apakah ada path gambar yang tersimpan
         if ($this->featured_image_path) {
-            // Jika ada, buat URL lengkapnya menggunakan helper 'Storage::url()'
-            return Storage::url($this->featured_image_path);
+            return url(Storage::url($this->featured_image_path));
         }
-        
-        // Jika tidak ada gambar, kembalikan null
         return null;
     }
 
-    // ======================================================
+    public function getGalleryUrlsAttribute()
+    {
+        // PENCEGAHAN ERROR 500:
+        // Cek apakah gallery_files ada DAN benar-benar array
+        if (empty($this->gallery_files) || !is_array($this->gallery_files)) {
+            return []; 
+        }
+        
+        // Jika data valid, baru diproses
+        return array_map(function($path) {
+            // Cek jika $path bukan string (jaga-jaga)
+            if (!is_string($path)) return ''; 
+            return url(Storage::url($path));
+        }, $this->gallery_files);
+    }
 
-    /**
-     * Mengubah kunci pencarian default untuk route model binding.
-     */
+    public function angkatan()
+    {
+        return $this->belongsTo(Angkatan::class);
+    }
+
     public function getRouteKeyName()
     {
         return 'slug';

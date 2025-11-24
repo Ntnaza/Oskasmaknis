@@ -9,6 +9,10 @@
               <h3 class="font-semibold text-lg text-blueGray-700">
                 Daftar Aspirasi Masuk
               </h3>
+              <!-- Indikator Angkatan -->
+              <small v-if="angkatanStore.activeAngkatan" class="text-emerald-600 font-bold block mt-1">
+                Arsip untuk: {{ angkatanStore.activeAngkatan.name }}
+              </small>
             </div>
           </div>
         </div>
@@ -45,7 +49,7 @@
               </tr>
               <tr v-if="!isLoading && aspirations.length === 0">
                 <td colspan="6" class="text-center p-4 text-blueGray-500">
-                  Belum ada aspirasi yang masuk.
+                  Belum ada aspirasi yang masuk untuk angkatan ini.
                 </td>
               </tr>
               <tr v-for="item in aspirations" :key="item.id">
@@ -81,6 +85,7 @@
       </div>
     </div>
 
+    <!-- MODAL DETAIL (Sama seperti sebelumnya, tidak ada perubahan logika angkatan di sini) -->
     <div v-if="selectedAspiration" class="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden overflow-y-auto">
       <div class="fixed inset-0 bg-black opacity-50" @click="closeDetailModal"></div>
       <div class="relative w-auto max-w-3xl mx-auto my-6" style="min-width: 600px">
@@ -155,29 +160,44 @@
 
 <script>
 import axios from 'axios';
+import { useAngkatanStore } from '@/stores/angkatan'; // 1. Import Store
+
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000';
 
 export default {
   data() {
     return {
+      angkatanStore: useAngkatanStore(), // 2. Inisialisasi Store
       aspirations: [],
       isLoading: true,
       isUpdating: false,
-      selectedAspiration: null, // Untuk kontrol modal
-      form: { // Form untuk update
+      selectedAspiration: null,
+      form: {
         status: '',
         internal_notes: ''
       }
     };
   },
+  // 3. Watcher untuk Auto-Reload
+  watch: {
+    'angkatanStore.selectedId': {
+      handler(newVal) {
+        if (newVal) this.fetchAspirations();
+      },
+      immediate: true
+    }
+  },
   methods: {
-    // Ambil data dari API
     async fetchAspirations() {
+      if (!this.angkatanStore.selectedId) return;
+
       this.isLoading = true;
       try {
-        const response = await axios.get('/api/admin/aspirations');
-        this.aspirations = response.data.data; // .data karena ini paginated
-        // Nanti kita bisa tambahkan logika pagination di sini
+        // 4. Kirim params angkatan_id
+        const response = await axios.get('/api/admin/aspirations', {
+            params: { angkatan_id: this.angkatanStore.selectedId }
+        });
+        this.aspirations = response.data.data; 
       } catch (error) {
         console.error("Gagal mengambil data aspirasi:", error);
       } finally {
@@ -185,20 +205,16 @@ export default {
       }
     },
     
-    // Buka Modal
     openDetailModal(aspiration) {
       this.selectedAspiration = aspiration;
-      // Isi form dengan data yang ada
       this.form.status = aspiration.status;
       this.form.internal_notes = aspiration.internal_notes;
     },
     
-    // Tutup Modal
     closeDetailModal() {
       this.selectedAspiration = null;
     },
     
-    // Kirim Update (Status / Catatan)
     async updateAspiration() {
       if (!this.selectedAspiration) return;
       this.isUpdating = true;
@@ -206,14 +222,12 @@ export default {
       try {
         const response = await axios.put(`/api/admin/aspirations/${this.selectedAspiration.id}`, this.form);
         
-        // Update data di tabel secara lokal (biar reaktif)
         const index = this.aspirations.findIndex(item => item.id === this.selectedAspiration.id);
         if (index !== -1) {
           this.aspirations[index] = response.data.data;
         }
         
         this.closeDetailModal();
-        // alert('Status berhasil diperbarui!');
       } catch (error) {
         console.error("Gagal mengupdate aspirasi:", error);
         alert("Gagal mengupdate, silakan coba lagi.");
@@ -222,7 +236,6 @@ export default {
       }
     },
     
-    // Hapus Aspirasi
     async deleteAspiration(id) {
       if (!confirm("Apakah Anda yakin ingin menghapus aspirasi ini? Ini tidak bisa dikembalikan.")) {
         return;
@@ -230,7 +243,6 @@ export default {
       
       try {
         await axios.delete(`/api/admin/aspirations/${id}`);
-        // Hapus dari list di frontend
         this.aspirations = this.aspirations.filter(item => item.id !== id);
       } catch (error) {
         console.error("Gagal menghapus aspirasi:", error);
@@ -238,7 +250,6 @@ export default {
       }
     },
     
-    // Helper
     getAttachmentUrl(path) {
       return `${API_BASE_URL}/storage/${path}`;
     },
@@ -257,8 +268,6 @@ export default {
       }
     }
   },
-  mounted() {
-    this.fetchAspirations();
-  }
+  // Mounted dihapus (digantikan watcher)
 };
 </script>

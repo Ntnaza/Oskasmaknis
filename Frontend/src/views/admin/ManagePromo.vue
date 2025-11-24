@@ -76,13 +76,148 @@
   </div> </template>
 
 <script>
-// Script tidak berubah
 import axios from "axios";
-const API_URL = 'http://localhost:8000/api/content-block/promo-section';
+import { useAngkatanStore } from "@/stores/angkatan"; // 1. Import Store
+
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000';
+const SECTION_KEY = 'landing-promo'; // Sesuaikan key di database (misal: landing-promo atau promo-section)
+const API_URL = `${API_BASE_URL}/api/content-block/${SECTION_KEY}`;
+
 export default {
-  data() { return { form: { content: { title: "", description: "", icon: "", image_url: "", list_items: [], } }, selectedFile: null, }; }, // title diinisialisasi ""
-  methods: { getFullImageUrl(path) { if (!path) return ''; if (path.startsWith('http')) return path; const baseUrl = process.env.VUE_APP_API_BASE_URL || 'http://localhost:8000'; return `${baseUrl}/storage/${path}`; }, handleFileChange(event) { this.selectedFile = event.target.files[0]; }, addListItem() { if (!Array.isArray(this.form.content.list_items)) { this.form.content.list_items = []; } this.form.content.list_items.push({ icon: 'fas fa-check', text: '' }); }, removeListItem(index) { this.form.content.list_items.splice(index, 1); }, async fetchContent() { try { const response = await axios.get(API_URL); const blockData = response.data.data; if (blockData.content && !Array.isArray(blockData.content.list_items)) { blockData.content.list_items = []; } this.form = { ...blockData, content: { title: blockData.content?.title || "", description: blockData.content?.description || "", icon: blockData.content?.icon || "", image_url: blockData.content?.image_url || "", list_items: blockData.content?.list_items || [], } }; } catch (error) { console.error("Gagal memuat data:", error); if (error.response && error.response.status === 404) { alert("Data promo section belum ada."); this.form.content.title = ""; } else { alert("Gagal memuat data."); } } }, async saveContent() { const formData = new FormData(); const contentToSave = { ...this.form.content, list_items: Array.isArray(this.form.content.list_items) ? this.form.content.list_items : [] }; formData.append('content', JSON.stringify(contentToSave)); if (this.selectedFile) { formData.append('image_file', this.selectedFile); } try { const response = await axios.post(API_URL, formData, { headers: { 'Content-Type': 'multipart/form-data' } }); alert(response.data.message || 'Berhasil!'); if (response.data.data) { const updatedBlock = response.data.data; if (updatedBlock.content && !Array.isArray(updatedBlock.content.list_items)) { updatedBlock.content.list_items = []; } this.form = { ...updatedBlock, content: { title: updatedBlock.content?.title || "", description: updatedBlock.content?.description || "", icon: updatedBlock.content?.icon || "", image_url: updatedBlock.content?.image_url || "", list_items: updatedBlock.content?.list_items || [], } }; } else { await this.fetchContent(); } this.selectedFile = null; if (this.$refs.fileInput) { this.$refs.fileInput.value = ''; } } catch (error) { console.error("Gagal simpan:", error.response?.data || error.message); alert(`Gagal simpan! ${error.response?.data?.message || ''}`); } } },
-  mounted() { this.fetchContent(); },
+  data() {
+    return {
+      angkatanStore: useAngkatanStore(), // 2. Inisialisasi Store
+      form: {
+        content: {
+          title: "",
+          description: "",
+          icon: "",
+          image_url: "",
+          list_items: [],
+        }
+      },
+      selectedFile: null,
+      isLoading: false
+    };
+  },
+
+  // 3. Watcher Otomatis
+  watch: {
+    'angkatanStore.selectedId': {
+      handler(newVal) {
+        if (newVal) {
+          this.fetchContent();
+        }
+      },
+      immediate: true
+    }
+  },
+
+  methods: {
+    getFullImageUrl(path) {
+      if (!path) return '';
+      if (path.startsWith('http')) return path;
+      return `${API_BASE_URL}/storage/${path}`;
+    },
+
+    handleFileChange(event) {
+      this.selectedFile = event.target.files[0];
+    },
+
+    addListItem() {
+      if (!Array.isArray(this.form.content.list_items)) {
+        this.form.content.list_items = [];
+      }
+      this.form.content.list_items.push({ icon: 'fas fa-check', text: '' });
+    },
+
+    removeListItem(index) {
+      this.form.content.list_items.splice(index, 1);
+    },
+
+    async fetchContent() {
+      if (!this.angkatanStore.selectedId) return; // Guard clause
+
+      this.isLoading = true;
+      try {
+        const response = await axios.get(API_URL, {
+            params: { angkatan_id: this.angkatanStore.selectedId } // 4. Kirim Parameter
+        });
+
+        // Handle jika data masih kosong (return template kosong dari backend)
+        const blockData = response.data.data;
+        
+        // Safety check untuk struktur data
+        const safeContent = blockData.content || {};
+        
+        this.form = {
+          ...blockData,
+          content: {
+            title: safeContent.title || "",
+            description: safeContent.description || "",
+            icon: safeContent.icon || "",
+            image_url: safeContent.image_url || "",
+            list_items: Array.isArray(safeContent.list_items) ? safeContent.list_items : []
+          }
+        };
+
+      } catch (error) {
+        console.error("Gagal memuat data:", error);
+        // Reset form jika error 404
+        this.form.content = { title: "", description: "", icon: "", image_url: "", list_items: [] };
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async saveContent() {
+      if (!this.angkatanStore.selectedId) {
+          alert("Pilih angkatan dulu!");
+          return;
+      }
+
+      this.isLoading = true;
+      const formData = new FormData();
+      
+      // 5. Kirim angkatan_id
+      formData.append('angkatan_id', this.angkatanStore.selectedId);
+
+      // Siapkan konten JSON
+      const contentToSave = {
+        ...this.form.content,
+        list_items: Array.isArray(this.form.content.list_items) ? this.form.content.list_items : []
+      };
+      formData.append('content', JSON.stringify(contentToSave));
+
+      if (this.selectedFile) {
+        formData.append('image_file', this.selectedFile);
+      }
+
+      try {
+        const response = await axios.post(API_URL, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+
+        alert(response.data.message || 'Berhasil disimpan!');
+        
+        // Refresh data agar sinkron
+        await this.fetchContent();
+        
+        // Reset file input
+        this.selectedFile = null;
+        if (this.$refs.fileInput) {
+          this.$refs.fileInput.value = '';
+        }
+
+      } catch (error) {
+        console.error("Gagal simpan:", error);
+        alert(`Gagal simpan! ${error.response?.data?.message || ''}`);
+      } finally {
+        this.isLoading = false;
+      }
+    }
+  },
+  // Mounted dihapus karena sudah di-handle Watcher
 };
 </script>
 

@@ -38,4 +38,8 @@ class Angkatan extends Model
         }
         return null;
     }
+    public function members()
+    {
+        return $this->hasMany(TeamMember::class, 'angkatan_id');
+    }
 }

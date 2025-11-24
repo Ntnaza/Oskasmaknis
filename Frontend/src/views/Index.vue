@@ -13,7 +13,7 @@
               {{ pageContentStore.content.index?.subtitle || "Harap tunggu sebentar..." }}
             </p>
             <div class="mt-12">
-              <router-link to="/landing" class="get-started text-white font-bold px-6 py-4 rounded outline-none focus:outline-none mr-1 mb-1 bg-emerald-500 active:bg-emerald-600 uppercase text-sm shadow hover:shadow-lg ease-linear transition-all duration-150">
+              <router-link to="/landing" class="get-started text-white font-bold px-6 py-4 rounded outline-none focus:outline-none mr-1 mb-1 bg-theme-500 hover:bg-theme-600 uppercase text-sm shadow hover:shadow-lg ease-linear transition-all duration-150">
                 Jelajahi disini
               </router-link>
               <router-link to="/berita-dan-galeri" class="github-star ml-1 text-white font-bold px-6 py-4 rounded outline-none focus:outline-none mr-1 mb-1 bg-blueGray-700 active:bg-blueGray-600 uppercase text-sm shadow hover:shadow-lg ease-linear transition-all duration-150">
@@ -50,7 +50,7 @@
       <div class="container mx-auto">
         <div class="flex flex-wrap items-center">
           <div class="w-10/12 md:w-6/12 lg:w-4/12 px-12 md:px-4 mr-auto ml-auto -mt-32">
-            <div class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded-lg bg-emerald-500">
+            <div class="relative flex flex-col min-w-0 break-words bg-white w-full mb-6 shadow-lg rounded-lg bg-theme-500">
               <img
                 alt="Foto Ketua OSIS"
                 :src="contentBlockStore.blocks['index-sambutan-ketua']?.content.ketua_osis_image_path
@@ -60,7 +60,7 @@
               />
               <blockquote class="relative p-8 mb-4">
                 <svg preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 583 95" class="absolute left-0 w-full block h-95-px -top-94-px">
-                  <polygon points="-30,95 583,95 583,65" class="text-emerald-500 fill-current"></polygon>
+                  <polygon points="-30,95 583,95 583,65" class="text-theme-500 fill-current"></polygon>
                 </svg>
                 <h4 class="text-xl font-bold text-white">{{ contentBlockStore.blocks['index-sambutan-ketua']?.content.ketua_osis_name || '...' }}</h4>
                 <p class="text-md font-light mt-2 text-white">"{{ contentBlockStore.blocks['index-sambutan-ketua']?.content.ketua_osis_sambutan || '...' }}"</p>
@@ -613,17 +613,18 @@ import { usePageContentStore } from '@/stores/pageContent.js';
 import { useContentBlockStore } from '@/stores/contentBlock.js';
 import { useWorkProgramStore } from '@/stores/workProgram.js';
 import { useArticleStore } from '@/stores/article.js';
+import { useAngkatanStore } from '@/stores/angkatan.js';
 
+// --- PERBAIKAN 1: Tambahkan komentar ini agar ESLint tidak protes ---
 // eslint-disable-next-line no-unused-vars
 import IndexNavbar from "@/components/Navbars/IndexNavbar.vue";
 // eslint-disable-next-line no-unused-vars
 import FooterComponent from "@/components/Footers/Footer.vue";
 
-// --- IMPORT BARU ---
 import axios from 'axios';
 import confetti from 'canvas-confetti';
-import Swal from 'sweetalert2'; // <-- IMPORT SWEETALERT
-import 'sweetalert2/dist/sweetalert2.min.css'; // <-- IMPORT CSS-NYA
+import Swal from 'sweetalert2'; 
+import 'sweetalert2/dist/sweetalert2.min.css'; 
 
 // eslint-disable-next-line no-unused-vars
 const backendUrl = 'http://localhost:8000';
@@ -632,6 +633,7 @@ const pageContentStore = usePageContentStore();
 const contentBlockStore = useContentBlockStore();
 const workProgramStore = useWorkProgramStore();
 const articleStore = useArticleStore();
+const angkatanStore = useAngkatanStore();
 
 const logos = ref([
   { src: '/assets/img/logo-oska.png', alt: 'Logo OSKA' },
@@ -655,16 +657,14 @@ const form = ref({
 });
 const formErrors = ref({});
 const isLoading = ref(false);
-// [UPDATE] Kita tidak perlu lagi ref successMessage dan errorMessage
-// const successMessage = ref('');
-// const errorMessage = ref(''); 
-const ticketId = ref(''); // (Kita simpan jika nanti perlu)
+// eslint-disable-next-line no-unused-vars
+const ticketId = ref(''); 
 
 // eslint-disable-next-line no-unused-vars
 function handleFileUpload(event) {
   const file = event.target.files[0];
-  if (file && file.size > 5 * 1024 * 1024) { // 5MB limit
-    Swal.fire({ // <-- Ganti alert() biasa dengan Swal
+  if (file && file.size > 5 * 1024 * 1024) { 
+    Swal.fire({ 
       icon: 'error',
       title: 'Ukuran File Terlalu Besar',
       text: 'Ukuran file maksimal adalah 5MB.',
@@ -675,20 +675,17 @@ function handleFileUpload(event) {
   form.value.attachment = file;
 }
 
-// [UPDATE] Fungsi triggerConfetti() dihapus, kita akan panggil confetti() langsung
-
 // eslint-disable-next-line no-unused-vars
 async function submitAspiration() {
   formErrors.value = {};
 
   if (form.value.rating === 0) {
     formErrors.value.rating = 'Rating kepuasan wajib diisi.';
-    // Tampilkan notifikasi error singkat
     Swal.fire({
       icon: 'warning',
       title: 'Validasi Gagal',
       text: 'Mohon berikan rating kepuasan sebelum mengirim.',
-      toast: true, // <-- Tampilkan sebagai notif kecil (toast)
+      toast: true, 
       position: 'top-end',
       showConfirmButton: false,
       timer: 3000
@@ -698,7 +695,6 @@ async function submitAspiration() {
 
   isLoading.value = true;
   const formData = new FormData();
-  // ... (append data form tetap sama) ...
   formData.append('subject', form.value.subject);
   formData.append('category', form.value.category);
   formData.append('message', form.value.message);
@@ -716,20 +712,18 @@ async function submitAspiration() {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
-    ticketId.value = response.data.ticket_id; // Simpan ticket ID
+    ticketId.value = response.data.ticket_id; 
     
-    // Refresh galeri di background
     fetchPublicAspirations(1);
 
     Swal.fire({
-      icon: 'success', // <-- Ini akan memunculkan animasi ceklis ✅
+      icon: 'success', 
       title: 'Aspirasi Terkirim!',
       text: 'Terima kasih telah menyampaikan aspirasi Anda. Kami akan segera meninjaunya.',
       confirmButtonText: 'Selesai',
-      confirmButtonColor: '#1e293b', // <-- TAMBAHKAN BARIS INI
+      confirmButtonColor: '#1e293b', 
       allowOutsideClick: false, 
       didOpen: () => {
-        // Tembakkan confetti!
         confetti({
           particleCount: 150,
           spread: 100,
@@ -737,18 +731,15 @@ async function submitAspiration() {
         });
       }
     }).then((result) => {
-      // Reset form HANYA setelah pengguna mengklik "Selesai"
       if (result.isConfirmed) {
         resetForm();
       }
     });
 
   } catch (error) {
-    // [UPDATE] Tampilkan notifikasi ERROR dengan SweetAlert
     let errorText = "Terjadi kesalahan di server. Silakan coba lagi nanti.";
     if (error.response && error.response.status === 422) {
       if (error.response.data.errors) {
-        // Ambil error validasi pertama (jika ada)
         const firstErrorKey = Object.keys(error.response.data.errors)[0];
         errorText = error.response.data.errors[firstErrorKey][0];
       } else {
@@ -760,7 +751,7 @@ async function submitAspiration() {
       icon: 'error',
       title: 'Oops... Gagal Terkirim',
       text: errorText,
-      confirmButtonColor: '#1e293b', // <-- TAMBAHKAN BARIS INI
+      confirmButtonColor: '#1e293b', 
     }); 
     
     console.error("Gagal mengirim aspirasi:", error);
@@ -782,15 +773,9 @@ function resetForm() {
   ticketId.value = '';
   const inputFile = document.getElementById('attachment');
   if (inputFile) inputFile.value = '';
-  
-  // [UPDATE] Tidak perlu reset success/error message
-  // successMessage.value = '';
-  // errorMessage.value = '';
 }
-// --- BATAS LOGIKA FORMULIR ---
 
-
-// --- LOGIKA GALERI ASPIRASI PUBLIK (Tetap Sama) ---
+// --- LOGIKA GALERI ASPIRASI PUBLIK ---
 const publicAspirations = ref({ data: [], total: 0 });
 const publicAspirationsLoading = ref(true);
 const publicAspirationSearch = ref('');
@@ -844,19 +829,22 @@ function formatRelativeTime(dateString) {
   if (hours < 24) return `${hours} jam lalu`;
   return `${days} hari lalu`;
 }
-// --- BATAS LOGIKA GALERI ---
 
-
-// --- onMounted dan onUnmounted (Tetap Sama) ---
-onMounted(() => {
+onMounted(async () => {
+  await angkatanStore.fetchAngkatans();
+  await contentBlockStore.fetchBlocksByPage('index'); 
+  
+  const currentAngkatanId = angkatanStore.selectedId;
   pageContentStore.fetchContentBySlug('index');
-  contentBlockStore.fetchBlocksByPage('index');
-  workProgramStore.fetchWorkPrograms();
+  workProgramStore.fetchWorkPrograms(currentAngkatanId);
   articleStore.fetchLatestArticles();
   fetchPublicAspirations(1);
+
   intervalId = setInterval(() => {
     activeLogoIndex.value = (activeLogoIndex.value + 1) % logos.value.length;
   }, 3000);
+  
+  angkatanStore.applyTheme();
 });
 
 onUnmounted(() => {
@@ -865,7 +853,7 @@ onUnmounted(() => {
   }
 });
 
-// --- Computed (Tetap Sama) ---
+// --- PERBAIKAN 2: Tambahkan komentar ini ---
 // eslint-disable-next-line no-unused-vars
 const featuredPrograms = computed(() => {
   const allPrograms = workProgramStore.workPrograms;

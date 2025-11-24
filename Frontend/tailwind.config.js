@@ -14,13 +14,14 @@ module.exports = {
     ],
     options: {
       safelist: [
-        // Pola ini mencakup SEMUA warna latar belakang dari palet Tailwind
+        // Pola default bawaan Vue Notus (Jangan dihapus)
         /bg-(slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(100|200|300|400|500|600|700|800|900|950)/,
-        // Regex lama untuk teks
         /text-(red|orange|amber|emerald|teal|lightBlue|indigo|purple|pink)-(500)/,
-        // Tambahkan safelist untuk class theme kita (jaga-jaga)
-        /bg-theme-(500|600)/,
-        /text-theme-(500|600)/,
+        
+        // --- PERBAIKAN REGEX TEMA DINAMIS ---
+        // Kita izinkan bg, text, border, dan ring sekaligus.
+        // Ini membuatmu bebas berkreasi (misal: border-theme-500) tanpa takut hilang.
+        /(bg|text|border|ring)-theme-(500|600)/, 
       ],
     },
   },
@@ -29,14 +30,16 @@ module.exports = {
       ...colors,
     },
     extend: {
-      // --- TAMBAHAN BARU: WARNA TEMA DINAMIS ---
+      // --- PERBAIKAN DEFINISI WARNA ---
       colors: {
         theme: {
-          500: 'var(--theme-color)',      // Warna Utama (Default: Emerald)
-          600: 'var(--theme-color-dark)', // Warna Hover (Default: Emerald Dark)
+          // Tambahkan fallback code (#10B981) setelah koma.
+          // Jika JS error/telat load, website tetap hijau (aman).
+          500: 'var(--theme-color, #10B981)',       
+          600: 'var(--theme-color-dark, #059669)', 
         },
       },
-      // -----------------------------------------
+      // --------------------------------
       minHeight: {
         "screen-75": "75vh",
       },

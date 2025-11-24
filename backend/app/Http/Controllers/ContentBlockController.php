@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ContentBlock;
+use App\Models\Angkatan; // <-- 1. Import Angkatan
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -13,14 +14,58 @@ class ContentBlockController extends Controller
     public function index(Request $request)
     {
         $request->validate(['page_slug' => 'required|string']);
-        $blocks = ContentBlock::where('page_slug', $request->page_slug)->get();
+        
+        // --- FILTER ANGKATAN ---
+        $query = ContentBlock::where('page_slug', $request->page_slug);
+        
+        if ($request->filled('angkatan_id')) {
+            $query->where('angkatan_id', $request->input('angkatan_id'));
+        } else {
+             // Fallback ke aktif
+            $activeAngkatan = Angkatan::where('is_active', true)->first();
+            if($activeAngkatan) {
+                $query->where('angkatan_id', $activeAngkatan->id);
+            }
+        }
+        // -----------------------
+
+        $blocks = $query->get();
         return response()->json(['data' => $blocks]);
     }
 
-    public function show(string $key)
+    public function show($key, Request $request)
     {
         Log::info('Mencari ContentBlock dengan section_key: ' . $key);
-        $block = ContentBlock::where('section_key', $key)->firstOrFail();
+        
+        // --- 2. LOGIKA ANGKATAN ---
+        $angkatanId = $request->query('angkatan_id');
+
+        // Jika tidak ada, ambil yang aktif
+        if (!$angkatanId) {
+            $activeAngkatan = Angkatan::where('is_active', true)->first();
+            $angkatanId = $activeAngkatan ? $activeAngkatan->id : null;
+        }
+
+        if (!$angkatanId) {
+            return response()->json(['message' => 'Tidak ada angkatan aktif.'], 404);
+        }
+
+        // Cari block spesifik untuk angkatan ini
+        $block = ContentBlock::where('section_key', $key)
+                             ->where('angkatan_id', $angkatanId)
+                             ->first();
+
+        // Jika tidak ada, return struktur kosong (jangan fail) agar frontend bisa isi
+        if (!$block) {
+             Log::info('ContentBlock belum ada untuk angkatan ini, mengembalikan template kosong.');
+             return response()->json(['data' => [
+                 'section_key' => $key,
+                 'content' => [],
+                 'angkatan_id' => $angkatanId
+             ]]);
+        }
+        // ---------------------------
+
         Log::info('ContentBlock ditemukan:', ['id' => $block->id]);
         return response()->json(['data' => $block]);
     }
@@ -29,7 +74,29 @@ class ContentBlockController extends Controller
     {
         Log::info('Memulai proses update untuk key: ' . $key);
 
-        $block = ContentBlock::where('section_key', $key)->firstOrFail();
+        // --- 3. LOGIKA ANGKATAN (CREATE OR UPDATE) ---
+        $angkatanId = $request->input('angkatan_id');
+        
+        // Fallback wajib
+        if (!$angkatanId) {
+            $activeAngkatan = Angkatan::where('is_active', true)->first();
+            $angkatanId = $activeAngkatan->id;
+        }
+
+        // Cari atau Buat Baru
+        $block = ContentBlock::firstOrNew([
+            'section_key' => $key,
+            'angkatan_id' => $angkatanId
+        ]);
+        
+        // Isi data wajib jika baru
+        if (!$block->exists) {
+             // Kita perlu tahu page_slug. 
+             // IDEALNYA frontend mengirim page_slug. 
+             // TAPI untuk kompatibilitas, kita bisa ambil dari request atau default 'index'
+             $block->page_slug = $request->input('page_slug', 'index'); 
+        }
+        // ---------------------------------------------
 
         $contentData = json_decode($request->input('content'), true);
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -38,7 +105,9 @@ class ContentBlockController extends Controller
         }
         Log::info('Data content berhasil di-decode.');
 
-        $newContent = $contentData;
+        // Merge dengan konten lama (agar data lain tidak hilang)
+        $currentContent = $block->content ?? [];
+        $newContent = array_merge($currentContent, $contentData);
 
         if ($request->hasFile('image_file')) {
             Log::info('File image_file DITEMUKAN untuk key: ' . $key);
@@ -61,17 +130,12 @@ class ContentBlockController extends Controller
                 return response()->json(['message' => 'Terjadi error saat menyimpan gambar.'], 500);
             }
         } else {
-             Log::warning('File image_file TIDAK DITEMUKAN dalam request.');
-             if (isset($block->content['image_url'])) {
-                 $newContent['image_url'] = $block->content['image_url'];
-             } else {
-                  $newContent['image_url'] = null;
-             }
+             // Jangan hapus URL lama jika tidak ada file baru
         }
 
         $block->content = $newContent;
         $block->save();
-        Log::info('ContentBlock untuk key ' . $key . ' berhasil disimpan.');
+        Log::info('ContentBlock untuk key ' . $key . ' berhasil disimpan (Angkatan ID: ' . $angkatanId . ').');
 
         return response()->json([
             'message' => 'Content block updated successfully!',
@@ -79,103 +143,73 @@ class ContentBlockController extends Controller
         ]);
     }
 
+    // --- METHOD BULK JUGA PERLU DISESUAIKAN ---
     public function updateBulk(Request $request)
     {
         Log::info('Memulai proses updateBulk.');
 
         $blocksData = json_decode($request->input('blocks'), true);
+        
+        // Ambil angkatan_id dari request (WAJIB DIKIRIM FRONTEND)
+        $angkatanId = $request->input('angkatan_id');
+        if (!$angkatanId) {
+             $active = Angkatan::where('is_active', true)->first();
+             $angkatanId = $active ? $active->id : null;
+        }
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            Log::error('Gagal decode JSON blocks:', ['json_input' => $request->input('blocks')]);
+            Log::error('Gagal decode JSON blocks');
             return response()->json(['message' => 'Invalid block data format.'], 400);
         }
 
-        Log::info('Data blocks berhasil di-decode.', ['count' => count($blocksData)]);
-
         foreach ($blocksData as $blockData) {
-            $block = ContentBlock::find($blockData['id']);
-            if (!$block) {
-                Log::warning('ContentBlock tidak ditemukan untuk ID:', ['id' => $blockData['id']]);
-                continue;
+            // Logika: Cari berdasarkan KEY dan ANGKATAN, bukan ID
+            // Karena ID mungkin belum ada untuk angkatan baru
+            
+            $key = $blockData['section_key'] ?? null;
+            if (!$key) continue;
+
+            $block = ContentBlock::firstOrNew([
+                'section_key' => $key,
+                'angkatan_id' => $angkatanId
+            ]);
+            
+            if (!$block->exists) {
+                $block->page_slug = 'index'; // Default/Asumsi
             }
 
-            Log::info('Memproses block ID: ' . $block->id . ', section_key: ' . $block->section_key);
+            $currentContent = $block->content ?? [];
+            $newContent = array_merge($currentContent, $blockData['content']);
 
-            $newContent = array_merge($block->content, $blockData['content']);
-
-            if ($block->section_key === 'index-sambutan-ketua') {
-                Log::info('Memproses blok index-sambutan-ketua.');
+            // --- LOGIKA FILE UPLOAD (OSIS/MPK/PEMBINA) ---
+            // (Saya salin ulang logika Anda yang sudah ada)
+            
+            if ($key === 'index-sambutan-ketua') {
                 if ($request->hasFile('osisFile')) {
-                    Log::info('File osisFile DITEMUKAN.');
-                    if (isset($block->content['ketua_osis_image_path']) && $block->content['ketua_osis_image_path'] && Storage::disk('public')->exists($block->content['ketua_osis_image_path'])) {
-                        Log::info('Menghapus osisFile lama: ' . $block->content['ketua_osis_image_path']);
+                    if (isset($block->content['ketua_osis_image_path']) && $block->content['ketua_osis_image_path']) {
                         Storage::disk('public')->delete($block->content['ketua_osis_image_path']);
                     }
-                    try {
-                        $path = $request->file('osisFile')->store('leaders', 'public');
-                        if($path) {
-                            Log::info('File osisFile BERHASIL disimpan. Path: ' . $path);
-                            $newContent['ketua_osis_image_path'] = $path;
-                        } else {
-                             Log::error('Penyimpanan osisFile GAGAL (store return false/null).');
-                        }
-                    } catch (\Exception $e) {
-                         Log::error('Error saat menyimpan osisFile: ' . $e->getMessage());
-                    }
-                } else {
-                     Log::warning('File osisFile TIDAK DITEMUKAN dalam request.');
+                    $newContent['ketua_osis_image_path'] = $request->file('osisFile')->store('leaders', 'public');
                 }
-
                 if ($request->hasFile('mpkFile')) {
-                    Log::info('File mpkFile DITEMUKAN.');
-                     if (isset($block->content['ketua_mpk_image_path']) && $block->content['ketua_mpk_image_path'] && Storage::disk('public')->exists($block->content['ketua_mpk_image_path'])) {
-                        Log::info('Menghapus mpkFile lama: ' . $block->content['ketua_mpk_image_path']);
+                    if (isset($block->content['ketua_mpk_image_path']) && $block->content['ketua_mpk_image_path']) {
                         Storage::disk('public')->delete($block->content['ketua_mpk_image_path']);
                     }
-                    try {
-                        $path = $request->file('mpkFile')->store('leaders', 'public');
-                         if($path) {
-                            Log::info('File mpkFile BERHASIL disimpan. Path: ' . $path);
-                            $newContent['ketua_mpk_image_path'] = $path;
-                        } else {
-                             Log::error('Penyimpanan mpkFile GAGAL (store return false/null).');
-                        }
-                    } catch (\Exception $e) {
-                         Log::error('Error saat menyimpan mpkFile: ' . $e->getMessage());
-                    }
-                } else {
-                     Log::warning('File mpkFile TIDAK DITEMUKAN dalam request.');
+                    $newContent['ketua_mpk_image_path'] = $request->file('mpkFile')->store('leaders', 'public');
                 }
             }
-            elseif ($block->section_key === 'index-pembina') {
-                Log::info('Memproses blok index-pembina.');
+            elseif ($key === 'index-pembina') {
                 if ($request->hasFile('pembinaFile')) {
-                    Log::info('File pembinaFile DITEMUKAN.');
-                    if (isset($block->content['pembina_image_path']) && $block->content['pembina_image_path'] && Storage::disk('public')->exists($block->content['pembina_image_path'])) {
-                        Log::info('Menghapus pembinaFile lama: ' . $block->content['pembina_image_path']);
+                    if (isset($block->content['pembina_image_path']) && $block->content['pembina_image_path']) {
                         Storage::disk('public')->delete($block->content['pembina_image_path']);
                     }
-                    try {
-                        $path = $request->file('pembinaFile')->store('pembina', 'public');
-                        if ($path) {
-                            Log::info('File pembinaFile BERHASIL disimpan. Path: ' . $path);
-                            $newContent['pembina_image_path'] = $path;
-                            Log::info('Path ditambahkan ke newContent:', $newContent);
-                        } else {
-                            Log::error('Penyimpanan pembinaFile GAGAL (store return false/null).');
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Error saat menyimpan pembinaFile: ' . $e->getMessage());
-                    }
-                } else {
-                    Log::warning('File pembinaFile TIDAK DITEMUKAN dalam request.');
+                    $newContent['pembina_image_path'] = $request->file('pembinaFile')->store('pembina', 'public');
                 }
             }
+            // ---------------------------------------------
 
-            Log::info('Konten final sebelum save untuk block ID ' . $block->id . ':', $newContent);
             $block->content = $newContent;
             $block->save();
-            Log::info('Block ID ' . $block->id . ' berhasil disimpan.');
         }
 
         Log::info('Proses updateBulk selesai.');

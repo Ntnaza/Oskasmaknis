@@ -13,6 +13,7 @@ class CalendarActivity extends Model
      * Kolom yang boleh diisi.
      */
     protected $fillable = [
+        'angkatan_id', // <--- WAJIB ADA AGAR TIDAK ERROR/NULL
         'title',
         'category',
         'start_date',
@@ -27,4 +28,12 @@ class CalendarActivity extends Model
         'start_date' => 'datetime',
         'end_date' => 'datetime',
     ];
+
+    /**
+     * Relasi ke Angkatan (Opsional, tapi bagus untuk referensi)
+     */
+    public function angkatan()
+    {
+        return $this->belongsTo(Angkatan::class);
+    }
 }

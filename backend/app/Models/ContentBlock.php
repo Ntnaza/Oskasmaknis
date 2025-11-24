@@ -18,6 +18,7 @@ class ContentBlock extends Model
         'page_slug',
         'section_key',
         'content',
+        'angkatan_id',
     ];
 
     /**
@@ -28,4 +29,8 @@ class ContentBlock extends Model
     protected $casts = [
         'content' => 'array', // Memberitahu Laravel bahwa kolom 'content' adalah JSON/array
     ];
+    public function angkatan()
+    {
+        return $this->belongsTo(Angkatan::class, 'angkatan_id');
+    }
 }
